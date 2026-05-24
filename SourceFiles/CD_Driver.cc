@@ -26,4 +26,3 @@ int main(int argc, char* argv[])
   cout << "Makespan: " << out.ComputeMakespan() << endl;
   return 0;
 }
-

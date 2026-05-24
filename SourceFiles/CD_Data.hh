@@ -7,10 +7,6 @@
 
 using namespace std;
 
-// ---------------------------------------------------------------------------
-// CD_Input
-// Stores all read-only problem data loaded from a .dzn instance file.
-// ---------------------------------------------------------------------------
 class CD_Input
 {
   friend ostream& operator<<(ostream& os, const CD_Input& in);
@@ -32,10 +28,7 @@ private:
   vector<vector<unsigned>> transfer_time; // t[i][j]: transfer time goods i -> j
 };
 
-// ---------------------------------------------------------------------------
-// CD_Output
-// Stores and manages the current solution (scheduling sequences).
-// ---------------------------------------------------------------------------
+
 class CD_Output
 {
   friend ostream& operator<<(ostream& os, const CD_Output& out);
