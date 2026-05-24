@@ -128,6 +128,22 @@ unsigned CD_Output::ComputeMakespan() const
     inbound_door_time = finish_unload[inbound_seq[pos]];
   }
 
+//   ESEMPIO: dzn small: i
+// InboundTrucks  = 4;
+// OutboundTrucks = 3;
+// ReleaseTime    = [0, 2, 1, 3];
+// UnloadTime     = [3, 2, 4, 2];
+// LoadTime       = [2, 3, 2];
+// TransferTime   = [| 1,2,1 | 2,1,3 | 1,1,2 | 3,2,1 |];
+
+// noi abbiamo:
+// inbound seq : 0,2,1,3
+// cout : 0 -> truck 0: max (0, 0) + 3 = 3
+// count: 1 -> truck 2: max (3, 2) + 2 = 5
+// count: 2 -> truck 1: max (5, 1) + 4 = 9
+// ecc....
+
+
   // Step 2: compute completion time of each outbound truck
   unsigned outbound_door_time = 0;
   unsigned makespan = 0;
