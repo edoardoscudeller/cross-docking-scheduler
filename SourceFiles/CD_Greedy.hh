@@ -7,4 +7,5 @@
 //   Schedule outbound trucks in non-decreasing order of loading time (SPT).
 void GreedyCDSolver(const CD_Input& in, CD_Output& out);
 
-#endif // CD_GREEDY_HH
+#endif
+
