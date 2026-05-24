@@ -5,9 +5,17 @@ import random
 import sys
 from pathlib import Path
 
+if len(sys.argv) < 3:
+    print("Uso: python3 generate.py <n_inbound> <n_outbound> [seed]")
+    sys.exit(1)
+
 n = int(sys.argv[1])
 m = int(sys.argv[2])
 seed = int(sys.argv[3]) if len(sys.argv) > 3 else 42
+
+if n <= 12 or m <= 8:
+    print("Errore: genera solo istanze più grandi di n=12 e m=8.")
+    sys.exit(1)
 
 random.seed(seed)
 
@@ -22,7 +30,7 @@ def fmt_array(v):
 rows = " | ".join(",".join(map(str, row)) for row in transfer_time)
 
 filename = f"cd_n{n:03d}_m{m:03d}.dzn"
-path = Path("Instances") / filename
+path = Path(__file__).parent / filename
 
 with open(path, "w") as f:
     f.write(f"InboundTrucks  = {n};\n")
