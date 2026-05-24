@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <chrono>
+#include <iomanip>
 #include "CD_Data.hh"
 #include "CD_Greedy.hh"
 
@@ -8,28 +9,33 @@ int main(int argc, char* argv[])
 {
     if (argc != 2)
     {
-        cerr << "Usage: " << argv[0] << " <input_file>" << endl;
-        exit(1);
+        std::cerr << "Usage: " << argv[0] << " <input_file>" << std::endl;
+        return 1;
     }
+
+    auto t_start = std::chrono::steady_clock::now();
 
     CD_Input  in(argv[1]);
     CD_Output out(in);
 
     if (in.InboundTrucks() <= 20)
-        cout << in << endl;
+        std::cout << in << std::endl;
 
-    // with timestamp
-    auto t_start = chrono::high_resolution_clock::now();
     GreedyCDSolver(in, out);
-    auto t_end = chrono::high_resolution_clock::now();
 
     if (in.InboundTrucks() <= 20)
-        cout << out << endl;
+        std::cout << out << std::endl;
 
-double elapsed_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+    unsigned makespan = out.ComputeMakespan();
 
-    cout << "Makespan : " << out.ComputeMakespan() << endl;
-    cout << "CPU time : " << elapsed_ms << " ms" << endl;
+    auto t_end = std::chrono::steady_clock::now();
+
+    double elapsed_s =
+        std::chrono::duration<double>(t_end - t_start).count();
+
+    std::cout << "Makespan : " << makespan << std::endl;
+    std::cout << std::fixed << std::setprecision(6);
+    std::cout << "CPU time : " << elapsed_s << " s" << std::endl;
 
     return 0;
 }
