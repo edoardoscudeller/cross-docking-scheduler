@@ -29,7 +29,6 @@ int main(int argc, char* argv[])
 double elapsed_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
 
     cout << "Makespan : " << out.ComputeMakespan() << endl;
-    std::cout << "TIMING ENABLED" << std::endl;
     cout << "CPU time : " << elapsed_ms << " ms" << endl;
 
     return 0;
