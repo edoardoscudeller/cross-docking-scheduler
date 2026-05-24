@@ -116,37 +116,30 @@ void CD_Output::Reset()
 
 unsigned CD_Output::ComputeMakespan() const
 {
-  unsigned n = in.InboundTrucks();
-  unsigned m = in.OutboundTrucks();
-
   // Step 1: compute finish time of each inbound truck
-  vector<unsigned> finish_unload(n);
-  unsigned door_free = 0;
-  for (unsigned pos = 0; pos < n; pos++)
+  vector<unsigned> finish_unload(in.InboundTrucks());
+  unsigned inbound_door_time = 0;
+
+  for (unsigned pos = 0; pos < in.InboundTrucks(); pos++)
   {
-    unsigned i = inbound_seq[pos];
-    unsigned start = max(door_free, in.ReleaseTime(i));
-    finish_unload[i] = start + in.UnloadTime(i);
-    door_free = finish_unload[i];
+    finish_unload[inbound_seq[pos]] = 
+    max(inbound_door_time, in.ReleaseTime(inbound_seq[pos])) 
+    + in.UnloadTime(inbound_seq[pos]);
+    inbound_door_time = finish_unload[inbound_seq[pos]];
   }
 
   // Step 2: compute completion time of each outbound truck
-  unsigned out_door_free = 0;
+  unsigned outbound_door_time = 0;
   unsigned makespan = 0;
 
-  for (unsigned pos = 0; pos < m; pos++)
+  for (unsigned pos = 0; pos < in.OutboundTrucks(); pos++)
   {
-    unsigned j = outbound_seq[pos];
-
-    // Earliest time all goods for j are available on the floor
     unsigned goods_ready = 0;
-    for (unsigned i = 0; i < n; i++)
-      goods_ready = max(goods_ready, finish_unload[i] + in.TransferTime(i, j));
+    for (unsigned i = 0; i < in.InboundTrucks(); i++)
+      goods_ready = max(goods_ready, finish_unload[i] + in.TransferTime(i, outbound_seq[pos]));
 
-    unsigned start = max(out_door_free, goods_ready);
-    unsigned finish = start + in.LoadTime(j);
-    out_door_free = finish;
-    makespan = max(makespan, finish);
+    outbound_door_time = max(outbound_door_time, goods_ready) + in.LoadTime(outbound_seq[pos]);
+    makespan = max(makespan, outbound_door_time);
   }
 
   return makespan;
