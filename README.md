@@ -1,4 +1,4 @@
-# Cross-Docking Truck Scheduling
+# Cross-Docking Truck Scheduling v0.1
 
 Progetto di ottimizzazione discreta — Advanced Scheduling Systems.  
 Università degli Studi di Udine.
@@ -7,17 +7,16 @@ Università degli Studi di Udine.
 
 ## Problema
 
-In un centro di cross-docking, un insieme di **camion inbound** (che scaricano merci)
-e **camion outbound** (che caricano merci) deve essere schedulato su porte condivise.
+In un centro di cross-docking, un insieme di **camion inbound** (che scaricano merci) e **camion outbound** (che caricano merci) deve essere schedulato su porte condivise.
 
-**Obiettivo:** minimizzare il **makespan** — il tempo totale per completare tutte le operazioni.
+**Obiettivo:** minimizzare il **makespan**, cioè il tempo totale necessario per completare tutte le operazioni di scarico, trasferimento e carico.
 
 **Vincoli strutturali:**
-- 1 sola porta inbound: i camion scaricano uno alla volta, in sequenza
-- 1 sola porta outbound: i camion caricano uno alla volta, in sequenza
-- Ogni camion inbound `i` ha un **release time** `r[i]`: non può iniziare a scaricare prima di essere arrivato
-- Le merci di `i` richiedono `t[i][j]` unità di tempo per raggiungere il camion outbound `j`
-- Il camion outbound `j` può iniziare a caricare solo quando **tutte** le sue merci sono disponibili
+- una sola porta inbound: i camion inbound scaricano uno alla volta, in sequenza;
+- una sola porta outbound: i camion outbound caricano uno alla volta, in sequenza;
+- ogni camion inbound `i` ha un **release time** `r[i]`, quindi non può iniziare a scaricare prima del suo arrivo;
+- le merci provenienti dal camion inbound `i` richiedono `t[i][j]` unità di tempo per raggiungere il camion outbound `j`;
+- il camion outbound `j` può iniziare a caricare solo quando **tutte** le merci necessarie sono disponibili.
 
 ---
 
@@ -27,131 +26,265 @@ e **camion outbound** (che caricano merci) deve essere schedulato su porte condi
 |---|---|
 | `n` | numero di camion inbound |
 | `m` | numero di camion outbound |
-| `r[i]` | release time del camion inbound `i` (quando arriva al magazzino) |
+| `r[i]` | release time del camion inbound `i` |
 | `p[i]` | tempo di scarico del camion inbound `i` |
 | `q[j]` | tempo di carico del camion outbound `j` |
-| `t[i][j]` | tempo di trasferimento merci da `i` a `j` sul pavimento |
+| `t[i][j]` | tempo di trasferimento merci da `i` a `j` |
 
-**Soluzione:** due permutazioni — `inbound_seq` e `outbound_seq` — che definiscono
-l'ordine di accesso alle rispettive porte.
-
----
-
-## Come viene calcolato il Makespan
-
-`ComputeMakespan()` simula l'intera operazione al magazzino in tre fasi:
-
-**Fase 1 — Porta inbound** (ciclo su `inbound_seq`):
-finish_unload[i] = max(porta_libera, r[i]) + p[i]
-Il camion aspetta che la porta sia libera E che lui stesso sia arrivato. Il massimo dei due determina l'inizio effettivo dello scarico.
-
-**Fase 2 — Disponibilità merci per ogni outbound**:
-goods_ready[j] = max su tutti gli i di: finish_unload[i] + t[i][j]
-Il camion outbound `j` non può iniziare finché l'ultimo pacco necessario non è arrivato.
-
-**Fase 3 — Porta outbound** (ciclo su `outbound_seq`):
-finish[j] = max(porta_out_libera, goods_ready[j]) + q[j]
-
-Il camion aspetta sia la porta libera che tutte le merci pronte.
-
-**Makespan** = `max(finish[j])` su tutti i camion outbound.
-
-> `ComputeMakespan` non ottimizza — valuta soltanto il costo di una soluzione data.
-> Il solver (greedy o local search) è responsabile di costruire le sequenze.
+Una soluzione è rappresentata da due permutazioni:
+- `inbound_seq`: ordine di accesso dei camion inbound alla porta di scarico;
+- `outbound_seq`: ordine di accesso dei camion outbound alla porta di carico.
 
 ---
 
-## Versioni
+## Calcolo del makespan
 
-| Versione | Tag | Tecnica | Descrizione |
-|---|---|---|---|
-| **v0.0** | `v0.0-greedy-ert` | Greedy ERT + SPT | Baseline: sequenze costruite per Earliest Release Time e Shortest Processing Time |
-| v0.1 | *(in sviluppo)* | + CPU timing + istanze grandi | Misurazione tempo di computazione e generatore di istanze |
-| v1.0 | *(in sviluppo)* | Local Search swap | Miglioramento iterativo tramite mosse di swap sulle sequenze |
+La funzione `ComputeMakespan()` valuta una soluzione data simulando l’intero flusso operativo del magazzino.
+
+### Fase 1 — Sequenza inbound
+
+Per ogni camion inbound `i` nella sequenza `inbound_seq`, si calcola il tempo di completamento dello scarico:
+
+```text
+finish_unload[i] = max(available_inbound_door, r[i]) + p[i]
+```
+
+Il camion può iniziare solo quando:
+- la porta inbound è libera;
+- il camion è effettivamente arrivato.
+
+### Fase 2 — Disponibilità delle merci
+
+Per ogni camion outbound `j`, si calcola il momento in cui tutte le merci necessarie sono arrivate nell’area outbound:
+
+```text
+goods_ready[j] = max_i ( finish_unload[i] + t[i][j] )
+```
+
+### Fase 3 — Sequenza outbound
+
+Per ogni camion outbound `j` nella sequenza `outbound_seq`, si calcola il completamento del carico:
+
+```text
+finish[j] = max(available_outbound_door, goods_ready[j]) + q[j]
+```
+
+Il camion può iniziare a caricare solo quando:
+- la porta outbound è libera;
+- tutte le merci sono disponibili.
+
+Il **makespan** finale è:
+
+```text
+max_j finish[j]
+```
+
+> `ComputeMakespan()` non costruisce la soluzione: si limita a valutarne il costo.
 
 ---
 
-## v0.0 — Greedy ERT + SPT
+## Strategia risolutiva
 
-### Idea
+La versione corrente implementa un solver **greedy** che costruisce separatamente le due sequenze.
 
-Il solver greedy costruisce le due sequenze in modo **indipendente**, applicando una regola euristica a ciascuna:
+### Sequenza inbound — ERT con tie-break SPT
 
-**Sequenza inbound — Earliest Release Time (ERT):**
-- I camion vengono ordinati per release time crescente
-- Rationale: la porta inbound resta idle il meno possibile
-- Tie-break: **Shortest Processing Time (SPT)** sull'unload time — in caso di parità, il camion più veloce da scaricare va prima, liberando la porta prima
+I camion inbound vengono ordinati per:
+1. **Earliest Release Time (ERT)**: release time crescente;
+2. in caso di parità, **Shortest Processing Time (SPT)**: unload time crescente.
 
-**Sequenza outbound — Shortest Processing Time (SPT):**
-- I camion vengono ordinati per load time crescente
-- Rationale: completare prima i camion veloci minimizza il tempo medio di attesa
+Questa scelta tende a ridurre i tempi morti della porta inbound e a liberarla rapidamente nei casi di parità.
 
-### Implementazione
+### Sequenza outbound — SPT
+
+I camion outbound vengono ordinati per **load time crescente**.
+
+L’idea è favorire prima i camion più rapidi da completare, riducendo il tempo medio di permanenza sul lato outbound.
+
+### Implementazione logica
 
 ```cpp
 // Inbound: ERT con tie-break SPT
-sort(in_seq, [](a, b) {
-    if (ReleaseTime(a) != ReleaseTime(b))
-        return ReleaseTime(a) < ReleaseTime(b);
-    return UnloadTime(a) < UnloadTime(b);
+sort(in_seq.begin(), in_seq.end(), [&](unsigned a, unsigned b) {
+    if (in.ReleaseTime(a) != in.ReleaseTime(b))
+        return in.ReleaseTime(a) < in.ReleaseTime(b);
+    return in.UnloadTime(a) < in.UnloadTime(b);
 });
 
 // Outbound: SPT
-sort(out_seq, [](a, b) {
-    return LoadTime(a) < LoadTime(b);
+sort(out_seq.begin(), out_seq.end(), [&](unsigned a, unsigned b) {
+    return in.LoadTime(a) < in.LoadTime(b);
 });
 ```
 
-### Complessità
+---
+
+## Complessità
 
 | Operazione | Complessità |
 |---|---|
-| Costruzione sequenze | `O(n log n + m log m)` |
+| Costruzione sequenza inbound | `O(n log n)` |
+| Costruzione sequenza outbound | `O(m log m)` |
 | Valutazione makespan | `O(n · m)` |
 
-### Limiti
+Complessità complessiva del solver greedy con valutazione finale:
 
-- Le due sequenze sono costruite **indipendentemente**: non si considera l'interazione tra lato inbound e lato outbound
-- Nessuna garanzia di ottimalità — è una soluzione di partenza (baseline)
-- Il miglioramento richiede una fase di ricerca locale (v1.0)
+```text
+O(n log n + m log m + n · m)
+```
 
 ---
 
-## Build
+## Limiti attuali
+
+- Le due sequenze sono costruite **indipendentemente**, quindi il greedy non tiene conto in modo esplicito dell’interazione tra ordine inbound e ordine outbound.
+- Non ci sono garanzie di ottimalità.
+- Il greedy rappresenta una **baseline** semplice e veloce, utile come punto di partenza per confronti futuri con tecniche di miglioramento.
+
+---
+
+## CPU time
+
+La versione corrente misura anche il **tempo totale di esecuzione del programma** per l’istanza caricata.
+
+Il tempo viene misurato nel `main` usando `std::chrono::steady_clock` e include:
+- lettura dell’istanza;
+- costruzione delle strutture dati;
+- esecuzione del solver greedy;
+- valutazione finale del makespan.
+
+L’output viene stampato in **secondi**.
+
+Esempio:
+
+```text
+Makespan : 57
+CPU time : 0.002341 s
+```
+
+---
+
+## Build ed esecuzione
+
+Dalla cartella `SourceFiles`:
 
 ```bash
 cd SourceFiles
 make
-./CD_Test ../Instances/cd_small.dzn
+./CD_Test ../Instances/cd_n004_m003.dzn
+```
+
+Per eseguire istanze più grandi:
+
+```bash
+./CD_Test ../Instances/cd_n020_m015.dzn
+./CD_Test ../Instances/cd_n050_m040.dzn
+./CD_Test ../Instances/cd_n120_m100.dzn
 ```
 
 ---
 
-## Formato istanza (`.dzn`)
+## Formato delle istanze
 
-InboundTrucks = 4;
+Le istanze sono memorizzate in formato `.dzn`.
+
+Esempio:
+
+```text
+InboundTrucks  = 4;
 OutboundTrucks = 3;
-ReleaseTime =;
+ReleaseTime    =;[2][3][4]
+UnloadTime     =;[3][5][2]
+LoadTime       =;[2][3]
+TransferTime   = [| 1,2,1 | 2,1,3 | 1,1,2 | 3,2,1 |];
+```
 
-UnloadTime = ;
-LoadTime = ;
-TransferTime = [| 1,2,1 | 2,1,3 | 1,1,2 | 3,2,1 |];
+### Significato dei campi
 
+- `InboundTrucks`: numero di camion inbound;
+- `OutboundTrucks`: numero di camion outbound;
+- `ReleaseTime[i]`: istante di arrivo del camion inbound `i`;
+- `UnloadTime[i]`: tempo di scarico del camion inbound `i`;
+- `LoadTime[j]`: tempo di carico del camion outbound `j`;
+- `TransferTime[i][j]`: tempo necessario a trasferire la merce del camion inbound `i` verso il camion outbound `j`.
 
-La matrice `TransferTime` ha `n` righe (inbound) e `m` colonne (outbound).  
-`TransferTime[i][j]` = tempo per spostare le merci del camion `i` verso il camion `j`.
+La matrice `TransferTime` ha:
+- `n` righe;
+- `m` colonne.
+
+---
+
+## Generazione automatica delle istanze
+
+La cartella `Instances/` contiene anche uno script Python per generare nuove istanze in modo automatico.
+
+Esempio d’uso:
+
+```bash
+cd Instances
+python3 generate.py 20 15
+python3 generate.py 50 40
+python3 generate.py 120 100
+```
+
+Lo script genera file con naming coerente, ad esempio:
+
+```text
+cd_n020_m015.dzn
+cd_n050_m040.dzn
+cd_n120_m100.dzn
+```
+
+Questo consente di costruire facilmente un insieme di test progressivamente più grande.
 
 ---
 
 ## Struttura del progetto
 
+```text
 cross-docking-scheduler/
 ├── Instances/
-│ └── cd_small.dzn # istanza di test (4 inbound, 3 outbound)
+│   ├── cd_n004_m003.dzn
+│   ├── cd_n008_m005.dzn
+│   ├── cd_n012_m008.dzn
+│   ├── cd_n020_m015.dzn
+│   ├── cd_n050_m040.dzn
+│   ├── cd_n120_m100.dzn
+│   └── generate.py
 └── SourceFiles/
-├── CD_Data.hh # CD_Input, CD_Output: strutture dati e interfaccia
-├── CD_Data.cc # parsing .dzn e implementazione ComputeMakespan
-├── CD_Greedy.hh # dichiarazione GreedyCDSolver
-├── CD_Greedy.cc # implementazione solver greedy (ERT + SPT)
-├── CD_Driver.cc # main: carica istanza, lancia solver, stampa risultato
-└── Makefile
+    ├── CD_Data.hh
+    ├── CD_Data.cc
+    ├── CD_Greedy.hh
+    ├── CD_Greedy.cc
+    ├── CD_Driver.cc
+    └── Makefile
+```
+
+### Descrizione dei file principali
+
+- `CD_Data.hh`: definizione delle classi `CD_Input` e `CD_Output`;
+- `CD_Data.cc`: parsing delle istanze `.dzn` e implementazione di `ComputeMakespan()`;
+- `CD_Greedy.hh`: dichiarazione del solver greedy;
+- `CD_Greedy.cc`: implementazione della costruzione delle sequenze inbound e outbound;
+- `CD_Driver.cc`: punto di ingresso del programma, caricamento istanza, esecuzione solver, stampa makespan e CPU time;
+- `generate.py`: generatore automatico di nuove istanze `.dzn`.
+
+---
+
+## Versioning del progetto
+
+| Versione | Stato | Contenuto |
+|---|---|---|
+| **v0.1** | corrente | Greedy ERT + SPT, parsing `.dzn`, CPU time in secondi, istanze estese, generatore Python |
+| v1.0 | futura | Local Search con mosse di swap |
+
+---
+
+## Novità della v0.1 rispetto alla v0.0
+
+- Misurazione del **CPU time** direttamente nel `main`.
+- Stampa del tempo di esecuzione in **secondi**.
+- Introduzione di un set di **istanze più grandi** oltre alle tre istanze base.
+- Naming delle istanze reso più coerente e parametrico, ad esempio `cd_n004_m003.dzn`.
+- Aggiunta di `Instances/generate.py` per la **generazione automatica** di nuove istanze `.dzn`.
+- Esempi di esecuzione aggiornati per supportare istanze piccole e grandi.
