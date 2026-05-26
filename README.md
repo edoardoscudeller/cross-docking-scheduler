@@ -275,8 +275,13 @@ cross-docking-scheduler/
 
 | Versione | Stato | Contenuto |
 |---|---|---|
-| **v0.1** | corrente | Greedy ERT + SPT, parsing `.dzn`, CPU time in secondi, istanze estese, generatore Python |
-| v1.0 | futura | Local Search con mosse di swap |
+| v0.0 | passata | Greedy ERT + SPT mono porta |
+| **v0.1** | corrente | Greedy ERT + SPT mono porta, CPU time in secondi, istanze estese, generatore Python |
+| v0.2 | possibile futura | Greedy migliorato |
+| v0.3 | possibile futura | Greedy migliorato multi porta |
+| v1.0 | possibile futura | Local Search multi porta |
+| v1.1 | possibile futura | Local Search multi porta con istanze più realistiche |
+
 
 ---
 
