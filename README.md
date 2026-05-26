@@ -275,11 +275,11 @@ cross-docking-scheduler/
 
 | Versione | Stato | Contenuto |
 |---|---|---|
-| v0.0 | futura | Greedy ERT + SPT mono porta |
+| v0.0 | passata | Greedy ERT + SPT mono porta |
 | **v0.1** | corrente | Greedy ERT + SPT mono porta, CPU time in secondi, istanze estese, generatore Python |
-| v0.2 | possibile futura | Miglioramento Greedy |
-| v0.3 | possibile futura | porte multiple |
-| v1.0 | possibile futura | Local Search a porte multiple |
+| v0.2 | possibile futura | Greedy migliorato |
+| v0.3 | possibile futura | Greedy migliorato multi porte |
+| v1.0 | possibile futura | Local Search multi porte |
 | v1.1 | possibile futura | Local Search con dati più realistici |
 
 
