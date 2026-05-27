@@ -2,6 +2,7 @@
 # run_all.sh  — versione corretta per formato cd_n0008_m0005_uniform_s101.dzn
 # Uso: bash run_all.sh   (dalla root cross-docking-scheduler/)
 
+#!/bin/bash
 BINARY="./SourceFiles/CD_Test"
 INSTANCES_DIR="./Instances"
 OUTPUT="results_v02.txt"
@@ -31,19 +32,14 @@ SCENARIOS=(uniform sparse clustered asymmetric congested urgent mixed)
 > "$OUTPUT"
 
 for SCENARIO in "${SCENARIOS[@]}"; do
-
   echo ">>> Scenario: $SCENARIO"
-
-  declare -a arr_name arr_n arr_m arr_seed arr_makespan arr_cpu
-  declare -a arr_original arr_inbound arr_outbound
+  declare -a arr_name arr_n arr_m arr_seed arr_makespan arr_cpu arr_original arr_inbound arr_outbound
   idx=0
 
   for SIZE in "${SIZES[@]}"; do
     N=$(echo $SIZE | awk '{print $1}')
     M=$(echo $SIZE | awk '{print $2}')
     SEED=$(echo $SIZE | awk '{print $3}')
-
-    # Formato reale: cd_n0008_m0005_uniform_s101.dzn
     INSTANCE="${INSTANCES_DIR}/cd_n$(printf "%04d" $N)_m$(printf "%04d" $M)_${SCENARIO}_s${SEED}.dzn"
 
     if [ ! -f "$INSTANCE" ]; then
@@ -53,7 +49,6 @@ for SCENARIO in "${SCENARIOS[@]}"; do
 
     BASENAME=$(basename "$INSTANCE" .dzn)
     echo "  Esecuzione: $BASENAME"
-
     RAW=$("$BINARY" "$INSTANCE" 2>/dev/null)
 
     MAKESPAN=$(echo "$RAW" | grep "^Makespan"          | awk '{print $3}')
@@ -75,41 +70,45 @@ for SCENARIO in "${SCENARIOS[@]}"; do
     arr_original[$idx]="$ORIGINAL"
     arr_inbound[$idx]="$INBOUND"
     arr_outbound[$idx]="$OUTBOUND"
-
     idx=$((idx + 1))
   done
 
   COUNT=$idx
-
   {
     echo "========================================"
     echo "SCENARIO: $SCENARIO"
     echo "========================================"
     echo ""
-
     echo "Instances"
     for ((i=0; i<COUNT; i++)); do echo "${arr_name[$i]}"; done
     echo ""
-
     echo "n (inbound)"
     for ((i=0; i<COUNT; i++)); do echo "${arr_n[$i]}"; done
     echo ""
-
     echo "m (outbound)"
     for ((i=0; i<COUNT; i++)); do echo "${arr_m[$i]}"; done
     echo ""
-
     echo "Seed"
     for ((i=0; i<COUNT; i++)); do echo "${arr_seed[$i]}"; done
     echo ""
-
     echo "Makespan"
     for ((i=0; i<COUNT; i++)); do echo "${arr_makespan[$i]}"; done
     echo ""
-
     echo "CPU time (s)"
     for ((i=0; i<COUNT; i++)); do echo "${arr_cpu[$i]}"; done
     echo ""
-
     echo "Original sequence"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_original[$i]}"; 
+    for ((i=0; i<COUNT; i++)); do echo "${arr_original[$i]}"; done
+    echo ""
+    echo "Inbound sequence"
+    for ((i=0; i<COUNT; i++)); do echo "${arr_inbound[$i]}"; done
+    echo ""
+    echo "Outbound sequence"
+    for ((i=0; i<COUNT; i++)); do echo "${arr_outbound[$i]}"; done
+    echo ""
+  } >> "$OUTPUT"
+
+  unset arr_name arr_n arr_m arr_seed arr_makespan arr_cpu arr_original arr_inbound arr_outbound
+done
+
+echo "Fatto. Risultati salvati in: $OUTPUT"
