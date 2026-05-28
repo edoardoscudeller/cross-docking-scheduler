@@ -3,6 +3,12 @@
 # Uso: bash run_all.sh   (dalla root cross-docking-scheduler/)
 
 #!/bin/bash
+# run_all.sh
+# Lancia tutte le istanze, raccoglie i risultati dallo stdout del driver
+# e scrive results_v02.txt organizzato per scenario.
+# La logica algoritmica è in CD_Greedy.cc, compilata dal Makefile.
+# Uso: bash run_all.sh   (dalla root cross-docking-scheduler/)
+
 BINARY="./SourceFiles/CD_Test"
 INSTANCES_DIR="./Instances"
 OUTPUT="results_v02.txt"
@@ -33,12 +39,14 @@ SCENARIOS=(uniform sparse clustered asymmetric congested urgent mixed)
 
 for SCENARIO in "${SCENARIOS[@]}"; do
   echo ">>> Scenario: $SCENARIO"
-  declare -a arr_name arr_n arr_m arr_seed arr_makespan arr_cpu arr_original arr_inbound arr_outbound
+
+  declare -a arr_name arr_n arr_m arr_seed arr_makespan arr_cpu \
+             arr_original arr_inbound arr_outbound
   idx=0
 
   for SIZE in "${SIZES[@]}"; do
-    N=$(echo $SIZE | awk '{print $1}')
-    M=$(echo $SIZE | awk '{print $2}')
+    N=$(echo    $SIZE | awk '{print $1}')
+    M=$(echo    $SIZE | awk '{print $2}')
     SEED=$(echo $SIZE | awk '{print $3}')
     INSTANCE="${INSTANCES_DIR}/cd_n$(printf "%04d" $N)_m$(printf "%04d" $M)_${SCENARIO}_s${SEED}.dzn"
 
@@ -51,11 +59,17 @@ for SCENARIO in "${SCENARIOS[@]}"; do
     echo "  Esecuzione: $BASENAME"
     RAW=$("$BINARY" "$INSTANCE" 2>/dev/null)
 
-    MAKESPAN=$(echo "$RAW" | grep "^Makespan"          | awk '{print $3}')
-    CPU=$(echo      "$RAW" | grep "^CPU time"          | awk '{print $3}')
-    ORIGINAL=$(echo "$RAW" | grep "^Original sequence" | sed 's/^Original sequence *: *//')
-    INBOUND=$(echo  "$RAW" | grep "^Inbound  sequence" | sed 's/^Inbound  sequence *: *//')
-    OUTBOUND=$(echo "$RAW" | grep "^Outbound sequence" | sed 's/^Outbound sequence *: *//')
+    # Parsing allineato all'output del driver classico:
+    #   "Makespan : 1234"           → $3 = 1234
+    #   "CPU time : 0.000123 s"     → $3 = 0.000123
+    #   "Original sequence: 0 -> 1" → rimuove il prefisso
+    #   "Inbound  sequence: 0 -> 1" → doppio spazio nel label
+    #   "Outbound sequence: 0 -> 1" → idem
+    MAKESPAN=$(echo "$RAW" | grep "^Makespan : "        | awk '{print $3}')
+    CPU=$(echo      "$RAW" | grep "^CPU time : "        | awk '{print $3}')
+    ORIGINAL=$(echo "$RAW" | grep "^Original sequence:" | sed 's/^Original sequence: //')
+    INBOUND=$(echo  "$RAW" | grep "^Inbound  sequence:" | sed 's/^Inbound  sequence: //')
+    OUTBOUND=$(echo "$RAW" | grep "^Outbound sequence:" | sed 's/^Outbound sequence: //')
 
     [ -z "$ORIGINAL" ] && ORIGINAL="(n>20: not printed)"
     [ -z "$INBOUND"  ] && INBOUND="(n>20: not printed)"
@@ -80,35 +94,36 @@ for SCENARIO in "${SCENARIOS[@]}"; do
     echo "========================================"
     echo ""
     echo "Instances"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_name[$i]}"; done
+    for ((i=0; i<COUNT; i++)); do echo "${arr_name[$i]}";     done
     echo ""
     echo "n (inbound)"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_n[$i]}"; done
+    for ((i=0; i<COUNT; i++)); do echo "${arr_n[$i]}";        done
     echo ""
     echo "m (outbound)"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_m[$i]}"; done
+    for ((i=0; i<COUNT; i++)); do echo "${arr_m[$i]}";        done
     echo ""
     echo "Seed"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_seed[$i]}"; done
+    for ((i=0; i<COUNT; i++)); do echo "${arr_seed[$i]}";     done
     echo ""
     echo "Makespan"
     for ((i=0; i<COUNT; i++)); do echo "${arr_makespan[$i]}"; done
     echo ""
     echo "CPU time (s)"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_cpu[$i]}"; done
+    for ((i=0; i<COUNT; i++)); do echo "${arr_cpu[$i]}";      done
     echo ""
     echo "Original sequence"
     for ((i=0; i<COUNT; i++)); do echo "${arr_original[$i]}"; done
     echo ""
     echo "Inbound sequence"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_inbound[$i]}"; done
+    for ((i=0; i<COUNT; i++)); do echo "${arr_inbound[$i]}";  done
     echo ""
     echo "Outbound sequence"
     for ((i=0; i<COUNT; i++)); do echo "${arr_outbound[$i]}"; done
     echo ""
   } >> "$OUTPUT"
 
-  unset arr_name arr_n arr_m arr_seed arr_makespan arr_cpu arr_original arr_inbound arr_outbound
+  unset arr_name arr_n arr_m arr_seed arr_makespan arr_cpu \
+        arr_original arr_inbound arr_outbound
 done
 
 echo "Fatto. Risultati salvati in: $OUTPUT"
