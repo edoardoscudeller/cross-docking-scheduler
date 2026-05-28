@@ -1,12 +1,16 @@
-#!/bin/bash
-# run_all.sh  — versione corretta per formato cd_n0008_m0005_uniform_s101.dzn
-# Uso: bash run_all.sh   (dalla root cross-docking-scheduler/)
+#!/usr/bin/env bash
+# ===========================================================================
+# run_all.sh
+# Lancia CD_Test su tutte le istanze, raggruppate per scenario.
+# Output: results.txt (riscritto ad ogni esecuzione)
+# Uso:    bash run_all.sh   (dalla root cross-docking-scheduler/)
+# ===========================================================================
 
 #!/bin/bash
-# run_all.sh
-# Lancia tutte le istanze, raccoglie i risultati dallo stdout del driver
-# e scrive results_v02.txt organizzato per scenario.
-# La logica algoritmica è in CD_Greedy.cc, compilata dal Makefile.
+# run_all.sh  — versione aggiornata
+# Stampa per ogni istanza: nome, seed, n, m, makespan, CPU(s), CPU(min),
+# release time (solo se n<=20), inbound sequence (n<=20), outbound sequence (n<=20)
+# Risultati organizzati per scenario, in blocchi.
 # Uso: bash run_all.sh   (dalla root cross-docking-scheduler/)
 
 BINARY="./SourceFiles/CD_Test"
@@ -40,8 +44,8 @@ SCENARIOS=(uniform sparse clustered asymmetric congested urgent mixed)
 for SCENARIO in "${SCENARIOS[@]}"; do
   echo ">>> Scenario: $SCENARIO"
 
-  declare -a arr_name arr_n arr_m arr_seed arr_makespan arr_cpu \
-             arr_original arr_inbound arr_outbound
+  declare -a arr_name arr_n arr_m arr_seed arr_makespan arr_cpu arr_cpu_min \
+             arr_release arr_inbound arr_outbound
   idx=0
 
   for SIZE in "${SIZES[@]}"; do
@@ -59,21 +63,38 @@ for SCENARIO in "${SCENARIOS[@]}"; do
     echo "  Esecuzione: $BASENAME"
     RAW=$("$BINARY" "$INSTANCE" 2>/dev/null)
 
-    # Parsing allineato all'output del driver classico:
-    #   "Makespan : 1234"           → $3 = 1234
-    #   "CPU time : 0.000123 s"     → $3 = 0.000123
-    #   "Original sequence: 0 -> 1" → rimuove il prefisso
-    #   "Inbound  sequence: 0 -> 1" → doppio spazio nel label
-    #   "Outbound sequence: 0 -> 1" → idem
-    MAKESPAN=$(echo "$RAW" | grep "^Makespan : "        | awk '{print $3}')
-    CPU=$(echo      "$RAW" | grep "^CPU time : "        | awk '{print $3}')
-    ORIGINAL=$(echo "$RAW" | grep "^Original sequence:" | sed 's/^Original sequence: //')
-    INBOUND=$(echo  "$RAW" | grep "^Inbound  sequence:" | sed 's/^Inbound  sequence: //')
-    OUTBOUND=$(echo "$RAW" | grep "^Outbound sequence:" | sed 's/^Outbound sequence: //')
+    # Parsing makespan e CPU dall'output del binario
+    MAKESPAN=$(echo "$RAW" | grep -E "^Makespan\s*:" | awk '{print $3}')
+    CPU=$(echo      "$RAW" | grep -E "^CPU time\s*:" | awk '{print $3}')
 
-    [ -z "$ORIGINAL" ] && ORIGINAL="(n>20: not printed)"
-    [ -z "$INBOUND"  ] && INBOUND="(n>20: not printed)"
-    [ -z "$OUTBOUND" ] && OUTBOUND="(n>20: not printed)"
+    # CPU in minuti (usa awk per divisione float)
+    if [ -n "$CPU" ]; then
+      CPU_MIN=$(awk "BEGIN {printf \"%.6f\", $CPU / 60}")
+    else
+      CPU_MIN=""
+    fi
+
+    # Release time: letto direttamente dal file .dzn (sempre disponibile)
+    # ma mostrato solo se N <= 20
+    if [ "$N" -le 20 ]; then
+      RELEASE=$(grep -A1 "ReleaseTime" "$INSTANCE" | tail -1 \
+                | sed 's/.*\[//;s/\].*//' \
+                | tr -d ' ')
+      RELEASE="[${RELEASE}]"
+    else
+      RELEASE="(n>20: not printed)"
+    fi
+
+    # Inbound / Outbound sequence: solo se N <= 20 (stampate dal binario)
+    if [ "$N" -le 20 ]; then
+      INBOUND=$(echo  "$RAW" | grep "^Inbound  sequence:" | sed 's/^Inbound  sequence: //')
+      OUTBOUND=$(echo "$RAW" | grep "^Outbound sequence:" | sed 's/^Outbound sequence: //')
+      [ -z "$INBOUND"  ] && INBOUND="(not found in output)"
+      [ -z "$OUTBOUND" ] && OUTBOUND="(not found in output)"
+    else
+      INBOUND="(n>20: not printed)"
+      OUTBOUND="(n>20: not printed)"
+    fi
 
     arr_name[$idx]="$BASENAME"
     arr_n[$idx]="$N"
@@ -81,7 +102,8 @@ for SCENARIO in "${SCENARIOS[@]}"; do
     arr_seed[$idx]="$SEED"
     arr_makespan[$idx]="$MAKESPAN"
     arr_cpu[$idx]="$CPU"
-    arr_original[$idx]="$ORIGINAL"
+    arr_cpu_min[$idx]="$CPU_MIN"
+    arr_release[$idx]="$RELEASE"
     arr_inbound[$idx]="$INBOUND"
     arr_outbound[$idx]="$OUTBOUND"
     idx=$((idx + 1))
@@ -93,8 +115,11 @@ for SCENARIO in "${SCENARIOS[@]}"; do
     echo "SCENARIO: $SCENARIO"
     echo "========================================"
     echo ""
-    echo "Instances"
+    echo "Instance name"
     for ((i=0; i<COUNT; i++)); do echo "${arr_name[$i]}";     done
+    echo ""
+    echo "Seed"
+    for ((i=0; i<COUNT; i++)); do echo "${arr_seed[$i]}";     done
     echo ""
     echo "n (inbound)"
     for ((i=0; i<COUNT; i++)); do echo "${arr_n[$i]}";        done
@@ -102,17 +127,17 @@ for SCENARIO in "${SCENARIOS[@]}"; do
     echo "m (outbound)"
     for ((i=0; i<COUNT; i++)); do echo "${arr_m[$i]}";        done
     echo ""
-    echo "Seed"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_seed[$i]}";     done
-    echo ""
     echo "Makespan"
     for ((i=0; i<COUNT; i++)); do echo "${arr_makespan[$i]}"; done
     echo ""
-    echo "CPU time (s)"
+    echo "CPU Time (s)"
     for ((i=0; i<COUNT; i++)); do echo "${arr_cpu[$i]}";      done
     echo ""
-    echo "Original sequence"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_original[$i]}"; done
+    echo "CPU Time (min)"
+    for ((i=0; i<COUNT; i++)); do echo "${arr_cpu_min[$i]}";  done
+    echo ""
+    echo "Release time"
+    for ((i=0; i<COUNT; i++)); do echo "${arr_release[$i]}";  done
     echo ""
     echo "Inbound sequence"
     for ((i=0; i<COUNT; i++)); do echo "${arr_inbound[$i]}";  done
@@ -122,8 +147,9 @@ for SCENARIO in "${SCENARIOS[@]}"; do
     echo ""
   } >> "$OUTPUT"
 
-  unset arr_name arr_n arr_m arr_seed arr_makespan arr_cpu \
-        arr_original arr_inbound arr_outbound
+  unset arr_name arr_n arr_m arr_seed arr_makespan arr_cpu arr_cpu_min \
+        arr_release arr_inbound arr_outbound
 done
 
 echo "Fatto. Risultati salvati in: $OUTPUT"
+SCRIPT
