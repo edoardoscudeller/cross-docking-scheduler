@@ -7,13 +7,8 @@
 # ===========================================================================
 
 #!/bin/bash
-# run_all.sh  — versione aggiornata
-# Stampa per ogni istanza: nome, seed, n, m, makespan, CPU(s), CPU(min),
-# release time (solo se n<=20), inbound sequence (n<=20), outbound sequence (n<=20)
-# Risultati organizzati per scenario, in blocchi.
-# Uso: bash run_all.sh   (dalla root cross-docking-scheduler/)
 
-BINARY="./SourceFiles/CD_Test"
+BINARY="./SourceFiles/CD_Test.exe"
 INSTANCES_DIR="./Instances"
 OUTPUT="results_v02.txt"
 
@@ -41,18 +36,26 @@ SCENARIOS=(uniform sparse clustered asymmetric congested urgent mixed)
 
 > "$OUTPUT"
 
+if [ ! -x "$BINARY" ]; then
+  echo "Errore: binario $BINARY non trovato o non eseguibile."
+  exit 1
+fi
+
 for SCENARIO in "${SCENARIOS[@]}"; do
   echo ">>> Scenario: $SCENARIO"
 
-  declare -a arr_name arr_n arr_m arr_seed arr_makespan arr_cpu arr_cpu_min \
-             arr_release arr_inbound arr_outbound
+  declare -a arr_name arr_seed arr_n arr_m
+  declare -a arr_makespan arr_cpu_s arr_cpu_min
+  declare -a arr_release arr_inbound arr_outbound
+
   idx=0
 
   for SIZE in "${SIZES[@]}"; do
-    N=$(echo    $SIZE | awk '{print $1}')
-    M=$(echo    $SIZE | awk '{print $2}')
-    SEED=$(echo $SIZE | awk '{print $3}')
-    INSTANCE="${INSTANCES_DIR}/cd_n$(printf "%04d" $N)_m$(printf "%04d" $M)_${SCENARIO}_s${SEED}.dzn"
+    N=$(echo "$SIZE" | awk '{print $1}')
+    M=$(echo "$SIZE" | awk '{print $2}')
+    SEED=$(echo "$SIZE" | awk '{print $3}')
+
+    INSTANCE="${INSTANCES_DIR}/cd_n$(printf "%04d" "$N")_m$(printf "%04d" "$M")_${SCENARIO}_s${SEED}.dzn"
 
     if [ ! -f "$INSTANCE" ]; then
       echo "  [SKIP] non trovata: $INSTANCE"
@@ -61,95 +64,116 @@ for SCENARIO in "${SCENARIOS[@]}"; do
 
     BASENAME=$(basename "$INSTANCE" .dzn)
     echo "  Esecuzione: $BASENAME"
+
     RAW=$("$BINARY" "$INSTANCE" 2>/dev/null)
+    STATUS=$?
 
-    # Parsing makespan e CPU dall'output del binario
-    MAKESPAN=$(echo "$RAW" | grep -E "^Makespan\s*:" | awk '{print $3}')
-    CPU=$(echo      "$RAW" | grep -E "^CPU time\s*:" | awk '{print $3}')
+    MAKESPAN=""
+    CPU_S=""
+    CPU_MIN=""
+    RELEASE=""
+    INBOUND=""
+    OUTBOUND=""
 
-    # CPU in minuti (usa awk per divisione float)
-    if [ -n "$CPU" ]; then
-      CPU_MIN=$(awk "BEGIN {printf \"%.6f\", $CPU / 60}")
+    if [ $STATUS -eq 0 ] && [ -n "$RAW" ]; then
+      MAKESPAN=$(echo "$RAW" | awk -F': ' '/^Makespan : / {print $2}' | head -n 1)
+      CPU_S=$(echo "$RAW" | awk -F': ' '/^CPU time : / {print $2}' | sed 's/ s$//' | head -n 1)
+
+      if [ -n "$CPU_S" ]; then
+        CPU_MIN=$(awk -v t="$CPU_S" 'BEGIN { printf "%.6f", t/60.0 }')
+      fi
+
+      if [ "$N" -le 20 ]; then
+        RELEASE=$(echo "$RAW" | awk '/^ReleaseTime/ {sub(/^[^=]*=[[:space:]]*/, "", $0); print; exit}')
+        INBOUND=$(echo "$RAW" | sed -n 's/^Inbound  sequence: //p' | head -n 1)
+        OUTBOUND=$(echo "$RAW" | sed -n 's/^Outbound sequence: //p' | head -n 1)
+
+        [ -z "$RELEASE" ] && RELEASE="(n<=20: not found)"
+        [ -z "$INBOUND" ] && INBOUND="(n<=20: not found)"
+        [ -z "$OUTBOUND" ] && OUTBOUND="(n<=20: not found)"
+      else
+        RELEASE="(n>20: not printed)"
+        INBOUND="(n>20: not printed)"
+        OUTBOUND="(n>20: not printed)"
+      fi
     else
-      CPU_MIN=""
-    fi
-
-    # Release time: letto direttamente dal file .dzn (sempre disponibile)
-    # ma mostrato solo se N <= 20
-    if [ "$N" -le 20 ]; then
-      RELEASE=$(grep -A1 "ReleaseTime" "$INSTANCE" | tail -1 \
-                | sed 's/.*\[//;s/\].*//' \
-                | tr -d ' ')
-      RELEASE="[${RELEASE}]"
-    else
-      RELEASE="(n>20: not printed)"
-    fi
-
-    # Inbound / Outbound sequence: solo se N <= 20 (stampate dal binario)
-    if [ "$N" -le 20 ]; then
-      INBOUND=$(echo  "$RAW" | grep "^Inbound  sequence:" | sed 's/^Inbound  sequence: //')
-      OUTBOUND=$(echo "$RAW" | grep "^Outbound sequence:" | sed 's/^Outbound sequence: //')
-      [ -z "$INBOUND"  ] && INBOUND="(not found in output)"
-      [ -z "$OUTBOUND" ] && OUTBOUND="(not found in output)"
-    else
-      INBOUND="(n>20: not printed)"
-      OUTBOUND="(n>20: not printed)"
+      if [ "$N" -le 20 ]; then
+        RELEASE="(execution failed)"
+        INBOUND="(execution failed)"
+        OUTBOUND="(execution failed)"
+      else
+        RELEASE="(n>20: not printed)"
+        INBOUND="(n>20: not printed)"
+        OUTBOUND="(n>20: not printed)"
+      fi
     fi
 
     arr_name[$idx]="$BASENAME"
+    arr_seed[$idx]="$SEED"
     arr_n[$idx]="$N"
     arr_m[$idx]="$M"
-    arr_seed[$idx]="$SEED"
     arr_makespan[$idx]="$MAKESPAN"
-    arr_cpu[$idx]="$CPU"
+    arr_cpu_s[$idx]="$CPU_S"
     arr_cpu_min[$idx]="$CPU_MIN"
     arr_release[$idx]="$RELEASE"
     arr_inbound[$idx]="$INBOUND"
     arr_outbound[$idx]="$OUTBOUND"
+
     idx=$((idx + 1))
   done
 
   COUNT=$idx
+
   {
     echo "========================================"
     echo "SCENARIO: $SCENARIO"
     echo "========================================"
     echo ""
+
     echo "Instance name"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_name[$i]}";     done
+    for ((i=0; i<COUNT; i++)); do echo "${arr_name[$i]}"; done
     echo ""
+
     echo "Seed"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_seed[$i]}";     done
+    for ((i=0; i<COUNT; i++)); do echo "${arr_seed[$i]}"; done
     echo ""
+
     echo "n (inbound)"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_n[$i]}";        done
+    for ((i=0; i<COUNT; i++)); do echo "${arr_n[$i]}"; done
     echo ""
+
     echo "m (outbound)"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_m[$i]}";        done
+    for ((i=0; i<COUNT; i++)); do echo "${arr_m[$i]}"; done
     echo ""
+
     echo "Makespan"
     for ((i=0; i<COUNT; i++)); do echo "${arr_makespan[$i]}"; done
     echo ""
+
     echo "CPU Time (s)"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_cpu[$i]}";      done
+    for ((i=0; i<COUNT; i++)); do echo "${arr_cpu_s[$i]}"; done
     echo ""
+
     echo "CPU Time (min)"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_cpu_min[$i]}";  done
+    for ((i=0; i<COUNT; i++)); do echo "${arr_cpu_min[$i]}"; done
     echo ""
+
     echo "Release time"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_release[$i]}";  done
+    for ((i=0; i<COUNT; i++)); do echo "${arr_release[$i]}"; done
     echo ""
+
     echo "Inbound sequence"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_inbound[$i]}";  done
+    for ((i=0; i<COUNT; i++)); do echo "${arr_inbound[$i]}"; done
     echo ""
+
     echo "Outbound sequence"
     for ((i=0; i<COUNT; i++)); do echo "${arr_outbound[$i]}"; done
     echo ""
   } >> "$OUTPUT"
 
-  unset arr_name arr_n arr_m arr_seed arr_makespan arr_cpu arr_cpu_min \
-        arr_release arr_inbound arr_outbound
+  unset arr_name arr_seed arr_n arr_m
+  unset arr_makespan arr_cpu_s arr_cpu_min
+  unset arr_release arr_inbound arr_outbound
 done
 
 echo "Fatto. Risultati salvati in: $OUTPUT"
-SCRIPT
