@@ -33,29 +33,44 @@ static unsigned ComputePartialOutboundMakespan(
   return makespan;
 }
 
-// GreedyCDSolver  —  v0.2 Multi-Source Enhanced Greedy
+// GreedyCDSolver  —  v0.4 Composite-Score Greedy
 //
 // FASE 1 — Sequenza inbound  [Fonte 2 + 4]
-//   Criterio primario  : ERT  (Earliest Release Time)  [invariato]
-//   Tie-break 1        : r[i] + p[i]  (early completion proxy, da Chen & Song)
-//                        Preferisce i truck che completano prima lo scarico
-//                        rispetto al solo SPT.
-//   Tie-break 2        : max_j(t[i][j]) crescente  (WSPT-inspired)
-//                        I truck con transfer time piccoli verso tutti gli
-//                        outbound vengono anticipati: "sboccano" la catena.
 //
-// FASE 2 — Simulazione goods_ready  [Fonte 1 — Boysen et al.]
+//   Score composito (criterio UNICO, sostituisce la gerarchia ERT + tie-break):
+//
+//     score(i) = r[i] + p[i] + weighted_impact(i)
+//
+//   dove:
+//     weighted_impact(i) = sum_j( t[i][j] * q[j] ) / sum_j( t[i][j] )
+//
+//   Interpretazione:
+//     - r[i] + p[i]          : stima del completamento scarico (Chen & Song)
+//     - weighted_impact(i)   : load time outbound medio ponderato per il
+//                              transfer time (Yu & Egbelu 2008)
+//                              Penalizza i truck che alimentano outbound lenti.
+//   Ordine CRESCENTE: il truck con score minore va per primo.
+//
+//   Variante conservativa con soglia ERT:
+//     Se la differenza di release time tra due truck supera la media dei
+//     tempi di scarico (avg_unload), l'ERT puro prevale. Questo evita di
+//     ritardare eccessivamente un truck con release time molto basso solo
+//     perché ha un weighted_impact alto — violazione grave in scenari
+//     "urgent" e "asymmetric" con release times molto dispersi.
+//
+//   Nota sul cambio rispetto a v0.3:
+//     In v0.3 weighted_impact era usato come tie-break (terzo livello),
+//     quindi non modificava quasi mai la sequenza. In v0.4 diventa parte
+//     integrante del criterio primario: agisce su tutti i truck, non solo
+//     sui pareggi ERT + ECP.
+//
+// FASE 2 — Simulazione goods_ready  [Fonte 1 — Boysen et al.]  [invariata]
 //   Con la sequenza inbound fissata si calcola finish_unload[i] per ogni
 //   inbound truck. Poi si calcola goods_ready[j] per ogni outbound truck.
-//   Questo lega esplicitamente inbound e outbound.
 //
-// FASE 3 — Sequenza outbound: NEH-style insertion  [Fonte 3 — NEH + Fonte 1]
-//   3a. Ordinamento iniziale: goods_ready[j] + q[j]  (stima completamento)
-//       → Prima inseriamo i truck che presumibilmente finiscono per ultimi
-//         (NEH inserisce per peso decrescente).
-//   3b. Inserimento iterativo: per ogni truck (in ordine decrescente di
-//       goods_ready[j]+q[j]) si prova ogni posizione della sequenza parziale
-//       e si sceglie quella che minimizza il makespan parziale outbound.
+// FASE 3 — Sequenza outbound: NEH-style insertion  [Fonte 3 — NEH]  [invariata]
+//   3a. Ordinamento iniziale: goods_ready[j] + q[j] decrescente.
+//   3b. Inserimento iterativo con valutazione del makespan parziale.
 
 
 void GreedyCDSolver(const CD_Input& in, CD_Output& out)
@@ -64,27 +79,60 @@ void GreedyCDSolver(const CD_Input& in, CD_Output& out)
   vector<unsigned> in_seq(in.InboundTrucks());
   iota(in_seq.begin(), in_seq.end(), 0);
 
-  // Peso WSPT per ogni truck inbound: max transfer time verso qualsiasi outbound
-  // Truck con max_transfer piccolo → viene anticipato (sblocca prima gli outbound)
-  vector<unsigned> max_transfer(in.InboundTrucks(), 0);
+  // Precompute weighted_impact per ogni truck inbound  [Fonte 4 — Yu & Egbelu 2008]
+  //
+  // weighted_impact[i] = sum_j( t[i][j] * q[j] ) / sum_j( t[i][j] )
+  //
+  // Caso degenere: se sum_j(t[i][j]) == 0, il valore è 0.0 (nessun impatto).
+  // Usato come double per evitare troncamento integer nella divisione.
+  vector<double> weighted_impact(in.InboundTrucks(), 0.0);
   for (unsigned i = 0; i < in.InboundTrucks(); i++)
+  {
+    double num = 0.0;  // sum_j( t[i][j] * q[j] )
+    double den = 0.0;  // sum_j( t[i][j] )
     for (unsigned j = 0; j < in.OutboundTrucks(); j++)
-      max_transfer[i] = max(max_transfer[i], in.TransferTime(i, j));
+    {
+      double tij = static_cast<double>(in.TransferTime(i, j));
+      num += tij * static_cast<double>(in.LoadTime(j));
+      den += tij;
+    }
+    weighted_impact[i] = (den > 0.0) ? (num / den) : 0.0;
+  }
+
+  // Score composito per ogni truck inbound  [Fonte 2 + 4]
+  //
+  // score[i] = r[i] + p[i] + weighted_impact[i]
+  //
+  // Combina il completion proxy (Chen & Song) con l'impatto outbound
+  // ponderato (Yu & Egbelu). Un valore basso indica un truck "leggero"
+  // che finisce presto e non blocca outbound costosi → va servito prima.
+  vector<double> score(in.InboundTrucks());
+  for (unsigned i = 0; i < in.InboundTrucks(); i++)
+    score[i] = static_cast<double>(in.ReleaseTime(i) + in.UnloadTime(i))
+               + weighted_impact[i];
+
+  // Soglia conservativa per la guardia ERT:
+  // se due truck differiscono in release time di più della media dei
+  // tempi di scarico, l'ERT puro prevale sullo score composito.
+  // Questo protegge scenari con release times molto dispersi (urgent,
+  // asymmetric) dove ritardare un truck con r[i] basso sarebbe penalizzante.
+  double avg_unload = 0.0;
+  for (unsigned i = 0; i < in.InboundTrucks(); i++)
+    avg_unload += static_cast<double>(in.UnloadTime(i));
+  avg_unload /= static_cast<double>(in.InboundTrucks());
 
   sort(in_seq.begin(), in_seq.end(), [&](unsigned a, unsigned b)
   {
-    // Criterio 1: ERT
-    if (in.ReleaseTime(a) != in.ReleaseTime(b))
+    // Guardia ERT conservativa: se la differenza di release time supera
+    // la soglia, il truck con ERT minore ha priorità assoluta.
+    double ert_diff = static_cast<double>(in.ReleaseTime(a))
+                    - static_cast<double>(in.ReleaseTime(b));
+    if (std::abs(ert_diff) > avg_unload)
       return in.ReleaseTime(a) < in.ReleaseTime(b);
 
-    // Tie-break 1: early completion proxy r[i]+p[i]  (Chen & Song)
-    unsigned ecp_a = in.ReleaseTime(a) + in.UnloadTime(a);
-    unsigned ecp_b = in.ReleaseTime(b) + in.UnloadTime(b);
-    if (ecp_a != ecp_b)
-      return ecp_a < ecp_b;
-
-    // Tie-break 2: WSPT — priorità a truck con transfer time piccoli
-    return max_transfer[a] < max_transfer[b];
+    // Criterio composito (v0.4): score crescente  (Yu & Egbelu + Chen & Song)
+    // Agisce su tutti i truck con ERT simile, non solo sui pareggi esatti.
+    return score[a] < score[b];
   });
 
   out.SetInboundSeq(in_seq);
@@ -106,7 +154,7 @@ void GreedyCDSolver(const CD_Input& in, CD_Output& out)
     for (unsigned i = 0; i < in.InboundTrucks(); i++)
       goods_ready[j] = max(goods_ready[j], finish_unload[i] + in.TransferTime(i, j));
 
-      
+
   // FASE 3 — Sequenza outbound: NEH-style insertion
 
   // 3a. Ordinamento iniziale per goods_ready[j] + q[j] decrescente
