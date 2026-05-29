@@ -69,10 +69,7 @@ static const unsigned MAX_ITER = 5;  // numero massimo di iterazioni globali
 // Calcola il makespan parziale outbound dato finish_unload e una sequenza.
 // Politica EAD su d_out porte parallele.  [Fonte 3]
 // ---------------------------------------------------------------------------
-static unsigned ComputePartialOutboundMakespan(
-    const CD_Input&         in,
-    const vector<unsigned>& finish_unload,
-    const vector<unsigned>& partial_seq)
+static unsigned ComputePartialOutboundMakespan(const CD_Input&in, const vector<unsigned>& finish_unload, const vector<unsigned>& partial_seq)
 {
   vector<unsigned> door_free(in.OutboundDoors(), 0);
   unsigned makespan = 0;
@@ -80,10 +77,10 @@ static unsigned ComputePartialOutboundMakespan(
   for (unsigned pos = 0; pos < partial_seq.size(); pos++)
   {
     unsigned j = partial_seq[pos];
-
     // goods_ready[j]: il truck j non può partire prima che tutte le sue
     // merci siano disponibili (finish_unload[i] + transfer_time[i][j]).
     unsigned goods_ready_j = 0;
+
     for (unsigned i = 0; i < in.InboundTrucks(); i++)
       goods_ready_j = max(goods_ready_j, finish_unload[i] + in.TransferTime(i, j));
 
@@ -92,8 +89,7 @@ static unsigned ComputePartialOutboundMakespan(
       if (door_free[d] < door_free[best_door])
         best_door = d;
 
-    door_free[best_door] = max(door_free[best_door], goods_ready_j)
-                           + in.LoadTime(j);
+    door_free[best_door] = max(door_free[best_door], goods_ready_j) + in.LoadTime(j);
     makespan = max(makespan, door_free[best_door]);
   }
   return makespan;
@@ -128,8 +124,7 @@ static vector<double> ComputeWeightedImpact(const CD_Input& in)
 // rispetto al puro ERT, abbassando goods_ready dei truck outbound critici.
 // [Fonte 1 + 4]
 // ---------------------------------------------------------------------------
-static vector<unsigned> SortInbound(const CD_Input& in,
-                                    const vector<double>& wi)
+static vector<unsigned> SortInbound(const CD_Input& in, const vector<double>& wi)
 {
   double max_wi = *max_element(wi.begin(), wi.end());
   if (max_wi < 1e-9) max_wi = 1.0;
@@ -155,9 +150,7 @@ static vector<unsigned> SortInbound(const CD_Input& in,
 // Restituisce finish_unload[i] (indicizzato per truck id, non posizione).
 // [Fonte 1]
 // ---------------------------------------------------------------------------
-static vector<unsigned> SimulateInbound(const CD_Input& in,
-                                        const vector<unsigned>& in_seq,
-                                        vector<unsigned>& assigned_door_in)
+static vector<unsigned> SimulateInbound(const CD_Input& in, const vector<unsigned>& in_seq, vector<unsigned>& assigned_door_in)
 {
   vector<unsigned> finish_unload(in.InboundTrucks(), 0);
   vector<unsigned> door_free(in.InboundDoors(), 0);
@@ -170,10 +163,8 @@ static vector<unsigned> SimulateInbound(const CD_Input& in,
       if (door_free[d] < door_free[best_door])
         best_door = d;
 
-    unsigned i = in_seq[pos];
-    finish_unload[i] = max(door_free[best_door], in.ReleaseTime(i))
-                       + in.UnloadTime(i);
-    door_free[best_door]    = finish_unload[i];
+    finish_unload[in_seq[pos]] = max(door_free[best_door], in.ReleaseTime(in_seq[pos])) + in.UnloadTime(in_seq[pos]);
+    door_free[best_door]    = finish_unload[in_seq[pos]];
     assigned_door_in[pos]   = best_door;
   }
   return finish_unload;
@@ -190,8 +181,7 @@ static vector<unsigned> NEHOutbound(const CD_Input& in,
   vector<unsigned> goods_ready(in.OutboundTrucks(), 0);
   for (unsigned j = 0; j < in.OutboundTrucks(); j++)
     for (unsigned i = 0; i < in.InboundTrucks(); i++)
-      goods_ready[j] = max(goods_ready[j],
-                           finish_unload[i] + in.TransferTime(i, j));
+      goods_ready[j] = max(goods_ready[j], finish_unload[i] + in.TransferTime(i, j));
 
   // Ordinamento iniziale: (goods_ready[j] + q[j]) decrescente  [Fonte 3]
   vector<unsigned> ranked(in.OutboundTrucks());
