@@ -30,7 +30,6 @@ int main(int argc, char* argv[])
 
     if (in.InboundTrucks() <= 20)
     {
-        // Original sequence: indici ordinati per ReleaseTime (tie-break: indice)
         vector<unsigned> orig(in.InboundTrucks());
         iota(orig.begin(), orig.end(), 0);
         sort(orig.begin(), orig.end(), [&](unsigned a, unsigned b){
@@ -52,6 +51,7 @@ int main(int argc, char* argv[])
     double elapsed_s = chrono::duration<double>(t_end - t_start).count();
 
     cout << "Makespan : " << makespan << endl;
+    cout << "Doors    : in=" << in.InboundDoors() << "  out=" << in.OutboundDoors() << endl;
     cout << fixed << setprecision(6);
     cout << "CPU time : " << elapsed_s << " s" << endl;
 

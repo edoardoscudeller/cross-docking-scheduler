@@ -3,7 +3,7 @@
 #include "CD_Data.hh"
 
 // ---------------------------------------------------------------------------
-// GreedyCDSolver  —  versione v0.4 (Composite-Score Greedy)
+// GreedyCDSolver  —  versione v0.5 (Composite-Score Greedy, multi-door)
 //
 // Algoritmo composito derivato da:
 //   [1] Boysen, Fliedner & Scholl (2010) — OR Spectrum 32(1)
@@ -24,13 +24,13 @@
 //       soglia (media p[i]), l'ERT puro prevale per evitare violazioni gravi
 //       del vincolo di release time.
 //
-// Complessità:
-//   Inbound  : O(n log n)  [precompute weighted_impact + score: O(n*m)]
-//   Outbound : O(m² × n)   [NEH-style insertion: m passi, ognuno O(m×n)]
-//   Totale   : O(n*m + n log n + m² × n)  ≃  O(m² × n)
-//
-// Scalabilità: l'algoritmo funziona per qualsiasi n e m.
+// NOVITÀ v0.5 — Porte multiple:
+//   La simulazione inbound e outbound usa d_in / d_out porte parallele.
+//   L'assegnazione alla porta segue la politica EAD (Earliest Available Door):
+//   ogni truck viene assegnato alla porta che si libera prima.
+//   ComputePartialOutboundMakespan è aggiornato di conseguenza.
 // ---------------------------------------------------------------------------
+
 void GreedyCDSolver(const CD_Input& in, CD_Output& out);
 
 #endif

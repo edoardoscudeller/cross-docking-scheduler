@@ -2,15 +2,13 @@
 # ===========================================================================
 # run_all.sh
 # Lancia CD_Test su tutte le istanze, raggruppate per scenario.
-# Output: results.txt (riscritto ad ogni esecuzione)
+# Output: results_v05.txt (riscritto ad ogni esecuzione)
 # Uso:    bash run_all.sh   (dalla root cross-docking-scheduler/)
 # ===========================================================================
 
-#!/bin/bash
-
 BINARY="./SourceFiles/CD_Test.exe"
 INSTANCES_DIR="./Instances"
-OUTPUT="results_v02.txt"
+OUTPUT="results.txt"
 
 SIZES=(
   "8 5 101"
@@ -44,7 +42,7 @@ fi
 for SCENARIO in "${SCENARIOS[@]}"; do
   echo ">>> Scenario: $SCENARIO"
 
-  declare -a arr_name arr_seed arr_n arr_m
+  declare -a arr_name arr_seed arr_n arr_m arr_din arr_dout
   declare -a arr_makespan arr_cpu_s arr_cpu_min
   declare -a arr_release arr_inbound arr_outbound
 
@@ -71,6 +69,8 @@ for SCENARIO in "${SCENARIOS[@]}"; do
     MAKESPAN=""
     CPU_S=""
     CPU_MIN=""
+    DIN=""
+    DOUT=""
     RELEASE=""
     INBOUND=""
     OUTBOUND=""
@@ -78,6 +78,9 @@ for SCENARIO in "${SCENARIOS[@]}"; do
     if [ $STATUS -eq 0 ] && [ -n "$RAW" ]; then
       MAKESPAN=$(echo "$RAW" | awk -F': ' '/^Makespan : / {print $2}' | head -n 1)
       CPU_S=$(echo "$RAW" | awk -F': ' '/^CPU time : / {print $2}' | sed 's/ s$//' | head -n 1)
+
+      DIN=$(echo "$RAW" | sed -n 's/^Doors[[:space:]]*:[[:space:]]*in=\([0-9][0-9]*\)[[:space:]]*out=\([0-9][0-9]*\)$/\1/p' | head -n 1)
+      DOUT=$(echo "$RAW" | sed -n 's/^Doors[[:space:]]*:[[:space:]]*in=\([0-9][0-9]*\)[[:space:]]*out=\([0-9][0-9]*\)$/\2/p' | head -n 1)
 
       if [ -n "$CPU_S" ]; then
         CPU_MIN=$(awk -v t="$CPU_S" 'BEGIN { printf "%.6f", t/60.0 }')
@@ -112,6 +115,8 @@ for SCENARIO in "${SCENARIOS[@]}"; do
     arr_seed[$idx]="$SEED"
     arr_n[$idx]="$N"
     arr_m[$idx]="$M"
+    arr_din[$idx]="$DIN"
+    arr_dout[$idx]="$DOUT"
     arr_makespan[$idx]="$MAKESPAN"
     arr_cpu_s[$idx]="$CPU_S"
     arr_cpu_min[$idx]="$CPU_MIN"
@@ -138,12 +143,12 @@ for SCENARIO in "${SCENARIOS[@]}"; do
     for ((i=0; i<COUNT; i++)); do echo "${arr_seed[$i]}"; done
     echo ""
 
-    echo "n (inbound)"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_n[$i]}"; done
+    echo "Inbound doors"
+    for ((i=0; i<COUNT; i++)); do echo "${arr_din[$i]}"; done
     echo ""
 
-    echo "m (outbound)"
-    for ((i=0; i<COUNT; i++)); do echo "${arr_m[$i]}"; done
+    echo "Outbound doors"
+    for ((i=0; i<COUNT; i++)); do echo "${arr_dout[$i]}"; done
     echo ""
 
     echo "Makespan"
@@ -169,9 +174,10 @@ for SCENARIO in "${SCENARIOS[@]}"; do
     echo "Outbound sequence"
     for ((i=0; i<COUNT; i++)); do echo "${arr_outbound[$i]}"; done
     echo ""
+
   } >> "$OUTPUT"
 
-  unset arr_name arr_seed arr_n arr_m
+  unset arr_name arr_seed arr_n arr_m arr_din arr_dout
   unset arr_makespan arr_cpu_s arr_cpu_min
   unset arr_release arr_inbound arr_outbound
 done

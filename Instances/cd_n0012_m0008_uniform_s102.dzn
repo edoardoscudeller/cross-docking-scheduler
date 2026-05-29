@@ -1,5 +1,7 @@
 InboundTrucks  = 12;
 OutboundTrucks = 8;
+InboundDoors   = 2;
+OutboundDoors  = 1;
 ReleaseTime    = [9,22,10,35,11,24,18,27,36,2,33,34];
 UnloadTime     = [10,9,3,7,8,4,9,3,2,1,3,10];
 LoadTime       = [10,8,9,4,9,9,3,8];
