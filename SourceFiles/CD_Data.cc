@@ -20,6 +20,10 @@ CD_Input::CD_Input(string file_name)
     is >> buffer >> ch >> n_inbound >> ch;
     // OutboundTrucks = M;
     is >> buffer >> ch >> n_outbound >> ch;
+    // InboundDoors = D_IN;
+    is >> buffer >> ch >> d_inbound >> ch;
+    // OutboundDoors = D_OUT;
+    is >> buffer >> ch >> d_outbound >> ch;
 
     release_time.resize(n_inbound);
     unload_time.resize(n_inbound);
@@ -36,7 +40,7 @@ CD_Input::CD_Input(string file_name)
     for (i = 0; i < n_inbound; i++)
         is >> unload_time[i] >> ch;
 
-    // LoadTime 
+    // LoadTime
     is.ignore(MAX_DIM, '[');
     for (j = 0; j < n_outbound; j++)
         is >> load_time[j] >> ch;
@@ -46,13 +50,15 @@ CD_Input::CD_Input(string file_name)
     is >> ch;  // consume first '|'
     for (i = 0; i < n_inbound; i++)
         for (j = 0; j < n_outbound; j++)
-            is >> transfer_time[i][j] >> ch;  // value then ',' or '|'
+            is >> transfer_time[i][j] >> ch;
 }
 
 ostream& operator<<(ostream& os, const CD_Input& in)
 {
   os << "InboundTrucks  = " << in.n_inbound  << ";\n";
-  os << "OutboundTrucks = " << in.n_outbound << ";\n\n";
+  os << "OutboundTrucks = " << in.n_outbound << ";\n";
+  os << "InboundDoors   = " << in.d_inbound  << ";\n";
+  os << "OutboundDoors  = " << in.d_outbound << ";\n\n";
 
   os << "ReleaseTime = [";
   for (unsigned i = 0; i < in.n_inbound; i++)
@@ -80,82 +86,85 @@ ostream& operator<<(ostream& os, const CD_Input& in)
 }
 
 
-
 CD_Output::CD_Output(const CD_Input& my_in)
   : in(my_in),
     inbound_seq(my_in.InboundTrucks()),
-    outbound_seq(my_in.OutboundTrucks())
+    outbound_seq(my_in.OutboundTrucks()),
+    inbound_door(my_in.InboundTrucks(), 0),
+    outbound_door(my_in.OutboundTrucks(), 0)
 {
   Reset();
 }
 
 CD_Output& CD_Output::operator=(const CD_Output& other)
 {
-  inbound_seq  = other.inbound_seq;
-  outbound_seq = other.outbound_seq;
+  inbound_seq   = other.inbound_seq;
+  outbound_seq  = other.outbound_seq;
+  inbound_door  = other.inbound_door;
+  outbound_door = other.outbound_door;
   return *this;
 }
 
 void CD_Output::Reset()
 {
-  // Identity permutations: 0, 1, 2, ...
   iota(inbound_seq.begin(),  inbound_seq.end(),  0);
   iota(outbound_seq.begin(), outbound_seq.end(), 0);
+  fill(inbound_door.begin(),  inbound_door.end(),  0);
+  fill(outbound_door.begin(), outbound_door.end(), 0);
 }
 
-// ComputeMakespan
-// Simulation of the cross-dock schedule:
-//   1. Inbound trucks dock in inbound_seq order (one door, sequential).
-//      finish_unload[i] = max(finish_unload[prev], release_time[i]) + unload_time[i]
-//   2. For each outbound truck j (in outbound_seq order), it can start loading
-//      only after ALL required goods have arrived (max transfer finish) AND
-//      the outbound door is free.
-//      We assume all goods from every inbound truck are needed by every outbound truck
-//      (fully dense problem). Sparse variant: use a demand matrix.
-//   3. Makespan = max completion time of all outbound trucks.
+// ComputeMakespan — multi-door, politica EAD (Earliest Available Door)
+//
+// INBOUND: d_inbound porte parallele.
+//   Per ogni truck nella sequenza si assegna la porta con door_free minore.
+//   finish_unload[i] = max(door_free[EAD], release_time[i]) + unload_time[i]
+//
+// OUTBOUND: d_outbound porte parallele, stessa politica EAD.
+//   start[j] = max(door_free[EAD], goods_ready[j])
+//   finish[j] = start[j] + load_time[j]
+//
+// Makespan = max finish su tutti gli outbound truck.
 
 unsigned CD_Output::ComputeMakespan() const
 {
-  // Step 1: compute finish time of each inbound truck
-  vector<unsigned> finish_unload(in.InboundTrucks());
-  unsigned inbound_door_time = 0;
+  // Step 1: finish_unload[i] con porte inbound parallele
+  vector<unsigned> finish_unload(in.InboundTrucks(), 0);
+  vector<unsigned> door_free_in(in.InboundDoors(), 0);
 
   for (unsigned pos = 0; pos < in.InboundTrucks(); pos++)
   {
-    finish_unload[inbound_seq[pos]] = 
-    max(inbound_door_time, in.ReleaseTime(inbound_seq[pos])) 
-    + in.UnloadTime(inbound_seq[pos]);
-    inbound_door_time = finish_unload[inbound_seq[pos]];
+    unsigned best_door = 0;
+    for (unsigned d = 1; d < in.InboundDoors(); d++)
+      if (door_free_in[d] < door_free_in[best_door])
+        best_door = d;
+
+    finish_unload[inbound_seq[pos]] =
+      max(door_free_in[best_door], in.ReleaseTime(inbound_seq[pos]))
+      + in.UnloadTime(inbound_seq[pos]);
+    door_free_in[best_door] = finish_unload[inbound_seq[pos]];
   }
 
-//   ESEMPIO: dzn small: i
-// InboundTrucks  = 4;
-// OutboundTrucks = 3;
-// ReleaseTime    = [0, 2, 1, 3];
-// UnloadTime     = [3, 2, 4, 2];
-// LoadTime       = [2, 3, 2];
-// TransferTime   = [| 1,2,1 | 2,1,3 | 1,1,2 | 3,2,1 |];
+  // Step 2: goods_ready[j]
+  vector<unsigned> goods_ready(in.OutboundTrucks(), 0);
+  for (unsigned j = 0; j < in.OutboundTrucks(); j++)
+    for (unsigned i = 0; i < in.InboundTrucks(); i++)
+      goods_ready[j] = max(goods_ready[j], finish_unload[i] + in.TransferTime(i, j));
 
-// noi abbiamo:
-// inbound seq : 0,2,1,3
-// cout : 0 -> truck 0: max (0, 0) + 3 = 3
-// count: 1 -> truck 2: max (3, 2) + 2 = 5
-// count: 2 -> truck 1: max (5, 1) + 4 = 9
-// ecc....
-
-
-  // Step 2: compute completion time of each outbound truck
-  unsigned outbound_door_time = 0;
+  // Step 3: makespan con porte outbound parallele
+  vector<unsigned> door_free_out(in.OutboundDoors(), 0);
   unsigned makespan = 0;
 
   for (unsigned pos = 0; pos < in.OutboundTrucks(); pos++)
   {
-    unsigned goods_ready = 0;
-    for (unsigned i = 0; i < in.InboundTrucks(); i++)
-      goods_ready = max(goods_ready, finish_unload[i] + in.TransferTime(i, outbound_seq[pos]));
+    unsigned best_door = 0;
+    for (unsigned d = 1; d < in.OutboundDoors(); d++)
+      if (door_free_out[d] < door_free_out[best_door])
+        best_door = d;
 
-    outbound_door_time = max(outbound_door_time, goods_ready) + in.LoadTime(outbound_seq[pos]);
-    makespan = max(makespan, outbound_door_time);
+    door_free_out[best_door] =
+      max(door_free_out[best_door], goods_ready[outbound_seq[pos]])
+      + in.LoadTime(outbound_seq[pos]);
+    makespan = max(makespan, door_free_out[best_door]);
   }
 
   return makespan;

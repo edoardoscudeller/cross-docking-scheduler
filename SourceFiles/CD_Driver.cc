@@ -21,6 +21,9 @@ int main(int argc, char* argv[])
     if (in.InboundTrucks() <= 20)
         std::cout << in << std::endl;
 
+    std::cout << "Doors : in=" << in.InboundDoors()
+              << " out=" << in.OutboundDoors() << std::endl;
+
     GreedyCDSolver(in, out);
 
     if (in.InboundTrucks() <= 20)

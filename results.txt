@@ -1,0 +1,1358 @@
+========================================
+SCENARIO: uniform
+========================================
+
+Instance name
+cd_n0008_m0005_uniform_s101
+cd_n0012_m0008_uniform_s102
+cd_n0020_m0013_uniform_s103
+cd_n0040_m0020_uniform_s201
+cd_n0060_m0030_uniform_s202
+cd_n0080_m0040_uniform_s203
+cd_n0100_m0050_uniform_s204
+cd_n0120_m0060_uniform_s205
+cd_n0200_m0100_uniform_s301
+cd_n0300_m0150_uniform_s302
+cd_n0400_m0200_uniform_s303
+cd_n0500_m0250_uniform_s304
+cd_n0600_m0300_uniform_s305
+cd_n0040_m0020_uniform_s211
+cd_n0100_m0050_uniform_s212
+cd_n0300_m0150_uniform_s213
+cd_n0600_m0300_uniform_s214
+
+Seed
+101
+102
+103
+201
+202
+203
+204
+205
+301
+302
+303
+304
+305
+211
+212
+213
+214
+
+Inbound doors
+2
+2
+2
+8
+12
+16
+20
+24
+25
+38
+50
+63
+75
+8
+20
+38
+75
+
+Outbound doors
+1
+1
+1
+4
+6
+8
+10
+12
+13
+19
+25
+32
+38
+4
+10
+19
+38
+
+Makespan
+51
+110
+160
+161
+221
+277
+343
+403
+653
+955
+1257
+1557
+1856
+165
+336
+959
+1853
+
+CPU Time (s)
+0.000520
+0.000247
+0.000300
+0.000260
+0.000299
+0.000422
+0.000460
+0.000706
+0.002550
+0.002968
+0.004799
+0.007806
+0.011290
+0.000230
+0.001293
+0.003012
+0.011364
+
+CPU Time (min)
+0.000009
+0.000004
+0.000005
+0.000004
+0.000005
+0.000007
+0.000008
+0.000012
+0.000043
+0.000049
+0.000080
+0.000130
+0.000188
+0.000004
+0.000022
+0.000050
+0.000189
+
+Release time
+[18, 6, 17, 11, 14, 1, 21, 16];
+[9, 22, 10, 35, 11, 24, 18, 27, 36, 2, 33, 34];
+[45, 29, 59, 46, 44, 47, 52, 13, 44, 4, 58, 38, 47, 7, 41, 24, 29, 56, 21, 55];
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Inbound sequence
+5 -> 1 -> 3 -> 4 -> 7 -> 2 -> 0 -> 6
+9 -> 0 -> 2 -> 4 -> 6 -> 1 -> 5 -> 7 -> 10 -> 11 -> 3 -> 8
+9 -> 13 -> 7 -> 18 -> 15 -> 1 -> 16 -> 11 -> 14 -> 4 -> 8 -> 0 -> 3 -> 12 -> 5 -> 6 -> 19 -> 17 -> 10 -> 2
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Outbound sequence
+0 -> 4 -> 3 -> 2 -> 1
+6 -> 3 -> 1 -> 7 -> 2 -> 4 -> 5 -> 0
+2 -> 1 -> 4 -> 6 -> 12 -> 10 -> 11 -> 3 -> 9 -> 8 -> 0 -> 5 -> 7
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+========================================
+SCENARIO: sparse
+========================================
+
+Instance name
+cd_n0008_m0005_sparse_s101
+cd_n0012_m0008_sparse_s102
+cd_n0020_m0013_sparse_s103
+cd_n0040_m0020_sparse_s201
+cd_n0060_m0030_sparse_s202
+cd_n0080_m0040_sparse_s203
+cd_n0100_m0050_sparse_s204
+cd_n0120_m0060_sparse_s205
+cd_n0200_m0100_sparse_s301
+cd_n0300_m0150_sparse_s302
+cd_n0400_m0200_sparse_s303
+cd_n0500_m0250_sparse_s304
+cd_n0600_m0300_sparse_s305
+cd_n0040_m0020_sparse_s211
+cd_n0100_m0050_sparse_s212
+cd_n0300_m0150_sparse_s213
+cd_n0600_m0300_sparse_s214
+
+Seed
+101
+102
+103
+201
+202
+203
+204
+205
+301
+302
+303
+304
+305
+211
+212
+213
+214
+
+Inbound doors
+2
+2
+2
+8
+12
+16
+20
+24
+25
+38
+50
+63
+75
+8
+20
+38
+75
+
+Outbound doors
+1
+1
+1
+4
+6
+8
+10
+12
+13
+19
+25
+32
+38
+4
+10
+19
+38
+
+Makespan
+50
+109
+157
+158
+218
+275
+341
+401
+650
+953
+1255
+1554
+1854
+163
+334
+957
+1851
+
+CPU Time (s)
+0.000200
+0.000198
+0.000304
+0.000287
+0.000331
+0.000451
+0.000410
+0.000619
+0.001549
+0.003082
+0.005190
+0.008152
+0.010956
+0.000278
+0.001425
+0.003204
+0.011184
+
+CPU Time (min)
+0.000003
+0.000003
+0.000005
+0.000005
+0.000006
+0.000008
+0.000007
+0.000010
+0.000026
+0.000051
+0.000087
+0.000136
+0.000183
+0.000005
+0.000024
+0.000053
+0.000186
+
+Release time
+[18, 6, 17, 11, 14, 1, 21, 16];
+[9, 22, 10, 35, 11, 24, 18, 27, 36, 2, 33, 34];
+[45, 29, 59, 46, 44, 47, 52, 13, 44, 4, 58, 38, 47, 7, 41, 24, 29, 56, 21, 55];
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Inbound sequence
+5 -> 1 -> 3 -> 4 -> 7 -> 2 -> 0 -> 6
+9 -> 0 -> 2 -> 4 -> 6 -> 1 -> 5 -> 7 -> 10 -> 11 -> 3 -> 8
+9 -> 13 -> 7 -> 18 -> 15 -> 1 -> 16 -> 11 -> 14 -> 4 -> 8 -> 0 -> 3 -> 12 -> 5 -> 6 -> 19 -> 17 -> 10 -> 2
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Outbound sequence
+0 -> 4 -> 3 -> 2 -> 1
+6 -> 3 -> 1 -> 7 -> 2 -> 4 -> 5 -> 0
+2 -> 1 -> 4 -> 6 -> 12 -> 10 -> 11 -> 3 -> 9 -> 8 -> 0 -> 5 -> 7
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+========================================
+SCENARIO: clustered
+========================================
+
+Instance name
+cd_n0008_m0005_clustered_s101
+cd_n0012_m0008_clustered_s102
+cd_n0020_m0013_clustered_s103
+cd_n0040_m0020_clustered_s201
+cd_n0060_m0030_clustered_s202
+cd_n0080_m0040_clustered_s203
+cd_n0100_m0050_clustered_s204
+cd_n0120_m0060_clustered_s205
+cd_n0200_m0100_clustered_s301
+cd_n0300_m0150_clustered_s302
+cd_n0400_m0200_clustered_s303
+cd_n0500_m0250_clustered_s304
+cd_n0600_m0300_clustered_s305
+cd_n0040_m0020_clustered_s211
+cd_n0100_m0050_clustered_s212
+cd_n0300_m0150_clustered_s213
+cd_n0600_m0300_clustered_s214
+
+Seed
+101
+102
+103
+201
+202
+203
+204
+205
+301
+302
+303
+304
+305
+211
+212
+213
+214
+
+Inbound doors
+2
+2
+2
+8
+12
+16
+20
+24
+25
+38
+50
+63
+75
+8
+20
+38
+75
+
+Outbound doors
+1
+1
+1
+4
+6
+8
+10
+12
+13
+19
+25
+32
+38
+4
+10
+19
+38
+
+Makespan
+50
+106
+156
+159
+217
+274
+340
+401
+651
+953
+1255
+1554
+1854
+164
+333
+957
+1851
+
+CPU Time (s)
+0.000095
+0.000125
+0.000145
+0.000152
+0.000321
+0.000358
+0.000517
+0.000635
+0.001604
+0.003233
+0.005548
+0.008188
+0.012012
+0.000300
+0.001364
+0.003259
+0.011138
+
+CPU Time (min)
+0.000002
+0.000002
+0.000002
+0.000003
+0.000005
+0.000006
+0.000009
+0.000011
+0.000027
+0.000054
+0.000092
+0.000136
+0.000200
+0.000005
+0.000023
+0.000054
+0.000186
+
+Release time
+[18, 6, 17, 11, 14, 1, 21, 16];
+[9, 22, 10, 35, 11, 24, 18, 27, 36, 2, 33, 34];
+[45, 29, 59, 46, 44, 47, 52, 13, 44, 4, 58, 38, 47, 7, 41, 24, 29, 56, 21, 55];
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Inbound sequence
+5 -> 1 -> 3 -> 4 -> 7 -> 2 -> 0 -> 6
+9 -> 0 -> 2 -> 4 -> 6 -> 1 -> 5 -> 7 -> 10 -> 11 -> 3 -> 8
+9 -> 13 -> 7 -> 18 -> 15 -> 1 -> 16 -> 11 -> 14 -> 4 -> 8 -> 0 -> 3 -> 12 -> 5 -> 6 -> 19 -> 17 -> 10 -> 2
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Outbound sequence
+0 -> 4 -> 3 -> 2 -> 1
+6 -> 3 -> 1 -> 7 -> 2 -> 4 -> 5 -> 0
+2 -> 1 -> 4 -> 6 -> 12 -> 10 -> 11 -> 3 -> 9 -> 8 -> 0 -> 5 -> 7
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+========================================
+SCENARIO: asymmetric
+========================================
+
+Instance name
+cd_n0008_m0005_asymmetric_s101
+cd_n0012_m0008_asymmetric_s102
+cd_n0020_m0013_asymmetric_s103
+cd_n0040_m0020_asymmetric_s201
+cd_n0060_m0030_asymmetric_s202
+cd_n0080_m0040_asymmetric_s203
+cd_n0100_m0050_asymmetric_s204
+cd_n0120_m0060_asymmetric_s205
+cd_n0200_m0100_asymmetric_s301
+cd_n0300_m0150_asymmetric_s302
+cd_n0400_m0200_asymmetric_s303
+cd_n0500_m0250_asymmetric_s304
+cd_n0600_m0300_asymmetric_s305
+cd_n0040_m0020_asymmetric_s211
+cd_n0100_m0050_asymmetric_s212
+cd_n0300_m0150_asymmetric_s213
+cd_n0600_m0300_asymmetric_s214
+
+Seed
+101
+102
+103
+201
+202
+203
+204
+205
+301
+302
+303
+304
+305
+211
+212
+213
+214
+
+Inbound doors
+2
+2
+2
+8
+12
+16
+20
+24
+25
+38
+50
+63
+75
+8
+20
+38
+75
+
+Outbound doors
+1
+1
+1
+4
+6
+8
+10
+12
+13
+19
+25
+32
+38
+4
+10
+19
+38
+
+Makespan
+135
+214
+322
+194
+259
+307
+390
+442
+710
+1021
+1319
+1615
+1925
+212
+389
+1024
+1921
+
+CPU Time (s)
+0.000195
+0.000273
+0.000295
+0.000269
+0.000322
+0.000413
+0.000505
+0.000804
+0.001705
+0.003155
+0.005231
+0.008319
+0.011839
+0.000232
+0.001425
+0.003152
+0.011457
+
+CPU Time (min)
+0.000003
+0.000005
+0.000005
+0.000004
+0.000005
+0.000007
+0.000008
+0.000013
+0.000028
+0.000053
+0.000087
+0.000139
+0.000197
+0.000004
+0.000024
+0.000053
+0.000191
+
+Release time
+[18, 6, 17, 11, 14, 1, 21, 16];
+[9, 22, 10, 35, 11, 24, 18, 27, 36, 2, 33, 34];
+[45, 29, 59, 46, 44, 47, 52, 13, 44, 4, 58, 38, 47, 7, 41, 24, 29, 56, 21, 55];
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Inbound sequence
+5 -> 1 -> 3 -> 4 -> 7 -> 2 -> 0 -> 6
+9 -> 0 -> 2 -> 4 -> 6 -> 1 -> 5 -> 7 -> 10 -> 11 -> 3 -> 8
+9 -> 13 -> 7 -> 18 -> 15 -> 1 -> 16 -> 11 -> 14 -> 8 -> 4 -> 0 -> 3 -> 5 -> 12 -> 6 -> 19 -> 17 -> 10 -> 2
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Outbound sequence
+3 -> 0 -> 4 -> 1 -> 2
+2 -> 1 -> 0 -> 3 -> 6 -> 7 -> 5 -> 4
+6 -> 8 -> 10 -> 2 -> 5 -> 7 -> 1 -> 12 -> 0 -> 3 -> 9 -> 4 -> 11
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+========================================
+SCENARIO: congested
+========================================
+
+Instance name
+cd_n0008_m0005_congested_s101
+cd_n0012_m0008_congested_s102
+cd_n0020_m0013_congested_s103
+cd_n0040_m0020_congested_s201
+cd_n0060_m0030_congested_s202
+cd_n0080_m0040_congested_s203
+cd_n0100_m0050_congested_s204
+cd_n0120_m0060_congested_s205
+cd_n0200_m0100_congested_s301
+cd_n0300_m0150_congested_s302
+cd_n0400_m0200_congested_s303
+cd_n0500_m0250_congested_s304
+cd_n0600_m0300_congested_s305
+cd_n0040_m0020_congested_s211
+cd_n0100_m0050_congested_s212
+cd_n0300_m0150_congested_s213
+cd_n0600_m0300_congested_s214
+
+Seed
+101
+102
+103
+201
+202
+203
+204
+205
+301
+302
+303
+304
+305
+211
+212
+213
+214
+
+Inbound doors
+2
+2
+2
+8
+12
+16
+20
+24
+25
+38
+50
+63
+75
+8
+20
+38
+75
+
+Outbound doors
+1
+1
+1
+4
+6
+8
+10
+12
+13
+19
+25
+32
+38
+4
+10
+19
+38
+
+Makespan
+84
+153
+250
+119
+121
+117
+121
+119
+180
+181
+184
+182
+186
+124
+120
+179
+183
+
+CPU Time (s)
+0.000090
+0.000117
+0.000153
+0.000156
+0.000326
+0.000467
+0.000422
+0.000707
+0.001510
+0.003080
+0.005335
+0.007884
+0.011875
+0.000234
+0.001511
+0.003126
+0.011045
+
+CPU Time (min)
+0.000002
+0.000002
+0.000003
+0.000003
+0.000005
+0.000008
+0.000007
+0.000012
+0.000025
+0.000051
+0.000089
+0.000131
+0.000198
+0.000004
+0.000025
+0.000052
+0.000184
+
+Release time
+[4, 1, 4, 2, 3, 0, 5, 4];
+[1, 5, 4, 2, 1, 4, 5, 5, 4, 1, 3, 2];
+[5, 3, 5, 5, 5, 1, 5, 0, 4, 5, 0, 5, 3, 3, 2, 5, 0, 3, 0, 1];
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Inbound sequence
+5 -> 1 -> 3 -> 4 -> 0 -> 2 -> 7 -> 6
+4 -> 9 -> 0 -> 11 -> 3 -> 10 -> 5 -> 8 -> 2 -> 1 -> 6 -> 7
+10 -> 7 -> 18 -> 16 -> 5 -> 19 -> 14 -> 1 -> 12 -> 17 -> 13 -> 8 -> 2 -> 3 -> 6 -> 0 -> 4 -> 15 -> 9 -> 11
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Outbound sequence
+0 -> 4 -> 3 -> 2 -> 1
+4 -> 3 -> 2 -> 5 -> 0 -> 1 -> 6 -> 7
+0 -> 2 -> 4 -> 10 -> 8 -> 9 -> 1 -> 7 -> 12 -> 6 -> 11 -> 3 -> 5
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+========================================
+SCENARIO: urgent
+========================================
+
+Instance name
+cd_n0008_m0005_urgent_s101
+cd_n0012_m0008_urgent_s102
+cd_n0020_m0013_urgent_s103
+cd_n0040_m0020_urgent_s201
+cd_n0060_m0030_urgent_s202
+cd_n0080_m0040_urgent_s203
+cd_n0100_m0050_urgent_s204
+cd_n0120_m0060_urgent_s205
+cd_n0200_m0100_urgent_s301
+cd_n0300_m0150_urgent_s302
+cd_n0400_m0200_urgent_s303
+cd_n0500_m0250_urgent_s304
+cd_n0600_m0300_urgent_s305
+cd_n0040_m0020_urgent_s211
+cd_n0100_m0050_urgent_s212
+cd_n0300_m0150_urgent_s213
+cd_n0600_m0300_urgent_s214
+
+Seed
+101
+102
+103
+201
+202
+203
+204
+205
+301
+302
+303
+304
+305
+211
+212
+213
+214
+
+Inbound doors
+2
+2
+2
+8
+12
+16
+20
+24
+25
+38
+50
+63
+75
+8
+20
+38
+75
+
+Outbound doors
+1
+1
+1
+4
+6
+8
+10
+12
+13
+19
+25
+32
+38
+4
+10
+19
+38
+
+Makespan
+68
+108
+167
+159
+227
+279
+345
+409
+652
+964
+1260
+1563
+1849
+169
+338
+960
+1858
+
+CPU Time (s)
+0.000088
+0.000118
+0.000168
+0.000151
+0.000401
+0.000449
+0.000537
+0.001442
+0.001351
+0.003175
+0.005463
+0.008412
+0.011828
+0.000258
+0.000606
+0.003313
+0.011373
+
+CPU Time (min)
+0.000001
+0.000002
+0.000003
+0.000003
+0.000007
+0.000007
+0.000009
+0.000024
+0.000023
+0.000053
+0.000091
+0.000140
+0.000197
+0.000004
+0.000010
+0.000055
+0.000190
+
+Release time
+[0, 21, 7, 8, 3, 3, 8, 5];
+[11, 9, 2, 29, 9, 8, 10, 2, 6, 22, 6, 4];
+[14, 1, 2, 18, 44, 2, 52, 20, 0, 3, 4, 15, 19, 10, 59, 12, 7, 6, 53, 3];
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Inbound sequence
+0 -> 5 -> 4 -> 7 -> 2 -> 6 -> 3 -> 1
+2 -> 7 -> 11 -> 8 -> 10 -> 5 -> 1 -> 4 -> 6 -> 0 -> 9 -> 3
+8 -> 1 -> 5 -> 2 -> 19 -> 9 -> 10 -> 17 -> 16 -> 13 -> 15 -> 0 -> 11 -> 3 -> 12 -> 7 -> 4 -> 6 -> 18 -> 14
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Outbound sequence
+0 -> 3 -> 1 -> 2 -> 4
+2 -> 0 -> 3 -> 6 -> 5 -> 7 -> 4 -> 1
+8 -> 10 -> 7 -> 1 -> 12 -> 9 -> 2 -> 5 -> 11 -> 4 -> 0 -> 3 -> 6
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+========================================
+SCENARIO: mixed
+========================================
+
+Instance name
+cd_n0008_m0005_mixed_s101
+cd_n0012_m0008_mixed_s102
+cd_n0020_m0013_mixed_s103
+cd_n0040_m0020_mixed_s201
+cd_n0060_m0030_mixed_s202
+cd_n0080_m0040_mixed_s203
+cd_n0100_m0050_mixed_s204
+cd_n0120_m0060_mixed_s205
+cd_n0200_m0100_mixed_s301
+cd_n0300_m0150_mixed_s302
+cd_n0400_m0200_mixed_s303
+cd_n0500_m0250_mixed_s304
+cd_n0600_m0300_mixed_s305
+cd_n0040_m0020_mixed_s211
+cd_n0100_m0050_mixed_s212
+cd_n0300_m0150_mixed_s213
+cd_n0600_m0300_mixed_s214
+
+Seed
+101
+102
+103
+201
+202
+203
+204
+205
+301
+302
+303
+304
+305
+211
+212
+213
+214
+
+Inbound doors
+2
+2
+2
+8
+12
+16
+20
+24
+25
+38
+50
+63
+75
+8
+20
+38
+75
+
+Outbound doors
+1
+1
+1
+4
+6
+8
+10
+12
+13
+19
+25
+32
+38
+4
+10
+19
+38
+
+Makespan
+87
+167
+257
+182
+234
+312
+371
+429
+677
+990
+1292
+1588
+1883
+191
+368
+990
+1888
+
+CPU Time (s)
+0.000089
+0.000115
+0.000137
+0.000239
+0.000284
+0.000462
+0.000565
+0.000784
+0.001597
+0.003432
+0.005369
+0.007806
+0.011998
+0.000260
+0.001404
+0.003235
+0.011342
+
+CPU Time (min)
+0.000001
+0.000002
+0.000002
+0.000004
+0.000005
+0.000008
+0.000009
+0.000013
+0.000027
+0.000057
+0.000089
+0.000130
+0.000200
+0.000004
+0.000023
+0.000054
+0.000189
+
+Release time
+[18, 6, 17, 11, 14, 1, 21, 16];
+[9, 22, 10, 35, 11, 24, 18, 27, 36, 2, 33, 34];
+[45, 29, 59, 46, 44, 47, 52, 13, 44, 4, 58, 38, 47, 7, 41, 24, 29, 56, 21, 55];
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Inbound sequence
+5 -> 1 -> 3 -> 4 -> 7 -> 2 -> 0 -> 6
+9 -> 0 -> 2 -> 4 -> 6 -> 1 -> 5 -> 7 -> 10 -> 11 -> 3 -> 8
+9 -> 13 -> 7 -> 18 -> 15 -> 1 -> 16 -> 11 -> 14 -> 4 -> 8 -> 0 -> 3 -> 5 -> 12 -> 6 -> 19 -> 17 -> 10 -> 2
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Outbound sequence
+0 -> 4 -> 1 -> 3 -> 2
+6 -> 1 -> 0 -> 2 -> 7 -> 5 -> 3 -> 4
+1 -> 3 -> 10 -> 4 -> 0 -> 5 -> 6 -> 7 -> 8 -> 2 -> 9 -> 11 -> 12
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
