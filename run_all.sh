@@ -8,7 +8,7 @@
 
 BINARY="./SourceFiles/CD_Test.exe"
 INSTANCES_DIR="./Instances"
-OUTPUT="results.txt"
+OUTPUT="results_v0.1.txt"
 
 SIZES=(
   "8 5 101"
