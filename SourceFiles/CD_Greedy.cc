@@ -117,6 +117,27 @@ static vector<double> ComputeWeightedImpact(const CD_Input& in)
   return wi;
 }
 
+static vector<double> ComputeDynamicWeightedImpact(const CD_Input& in, const vector<unsigned>& finish_out)
+{
+  vector<double> wi(in.InboundTrucks(), 0.0);
+
+  for (unsigned i = 0; i < in.InboundTrucks(); i++)
+  {
+    double num = 0.0, den = 0.0;
+
+    for (unsigned j = 0; j < in.OutboundTrucks(); j++)
+    {
+      double tij = static_cast<double>(in.TransferTime(i, j));
+      num += tij * static_cast<double>(finish_out[j]);
+      den += tij;
+    }
+
+    wi[i] = (den > 0.0) ? (num / den) : 0.0;
+  }
+
+  return wi;
+}
+
 // ---------------------------------------------------------------------------
 // Fase 1: ordina la sequenza inbound con score WSPT senza guardia.
 //   score(i) = (r[i] + p[i]) * (1 + wi[i] / max_wi)
@@ -253,6 +274,7 @@ void GreedyCDSolver(const CD_Input& in, CD_Output& out)
     vector<unsigned> door_free_out(d_out, 0);
     vector<unsigned> assigned_door_out(in.OutboundTrucks(), 0);
     vector<unsigned> goods_ready(in.OutboundTrucks(), 0);
+    vector<unsigned> finish_out(in.OutboundTrucks(), 0);
     for (unsigned j = 0; j < in.OutboundTrucks(); j++)
       for (unsigned i = 0; i < in.InboundTrucks(); i++)
         goods_ready[j] = max(goods_ready[j],
@@ -260,23 +282,29 @@ void GreedyCDSolver(const CD_Input& in, CD_Output& out)
 
     for (unsigned pos = 0; pos < in.OutboundTrucks(); pos++)
     {
+      unsigned j = out_seq[pos];
+
       unsigned best_door = 0;
       for (unsigned d = 1; d < d_out; d++)
         if (door_free_out[d] < door_free_out[best_door]) best_door = d;
-      door_free_out[best_door] =
-        max(door_free_out[best_door], goods_ready[out_seq[pos]])
-        + in.LoadTime(out_seq[pos]);
+
+      unsigned start_j = max(door_free_out[best_door], goods_ready[j]);
+      finish_out[j] = start_j + in.LoadTime(j);
+      door_free_out[best_door] = finish_out[j];
+
       assigned_door_out[pos] = best_door;
     }
     out.SetOutboundDoor(assigned_door_out);
 
     unsigned ms = out.ComputeMakespan();
-    if (ms >= prev_makespan) break;  // convergenza
+    if (ms >= prev_makespan) break;
     prev_makespan = ms;
 
-    // Re-ordina inbound tenendo conto del makespan outbound corrente:
-    // ricalcola in_seq e finish_unload con lo stesso criterio WSPT
-    in_seq        = SortInbound(in, wi);
+    // Aggiorna wi usando i finish time outbound correnti
+    vector<double> dynamic_wi = ComputeDynamicWeightedImpact(in, finish_out);
+
+    // Re-ordina inbound con il nuovo peso dinamico
+    in_seq        = SortInbound(in, dynamic_wi);
     finish_unload = SimulateInbound(in, in_seq, assigned_door_in);
 
     // Rigenera sequenza outbound con i nuovi finish_unload
