@@ -32,17 +32,23 @@ random.seed(seed)
 # adottato nella letteratura benchmark (Boysen et al. 2010, Miao et al. 2009).
 #
 # Regola:
-#   n <= 20        : d_in = 2,  d_out = 1
+#   n <= 20        : d_in = 2,  d_out = 1  (minimo fisico plausibile)
 #   20 < n <= 150  : d_in = ceil(n/5),  d_out = ceil(m/5)
-#   n > 150        : d_in = ceil(n/8),  d_out = ceil(m/8)
-# ---------------------------------------------------------------------------
+#                    coerente con le configurazioni di Boysen et al. (2010)
+#                    [doi:10.1007/s00291-008-0139-0] e Nassief et al. (2016)
+#                    [doi:10.1080/00207543.2014.1003664]
+#   n > 150        : d_in = max(30, ceil(n/8)),  d_out = max(15, ceil(m/8))
+#                    estrapolazione conservativa per simulare la saturazione
+#                    fisica del dock nei terminal ad alto volume; il max()
+#                    garantisce continuità al confine n=150.
+# # ---------------------------------------------------------------------------
 def compute_inbound_doors(n):
     if n <= 20:
         return 2
     elif n <= 150:
         return math.ceil(n / 5)
     else:
-        return math.ceil(n / 8)
+        return max(30, math.ceil(n / 8))
 
 def compute_outbound_doors(n, m):
     if n <= 20:
@@ -50,7 +56,8 @@ def compute_outbound_doors(n, m):
     elif n <= 150:
         return math.ceil(m / 5)
     else:
-        return math.ceil(m / 8)
+        return max(15, math.ceil(m / 8))
+
 
 d_in  = compute_inbound_doors(n)
 d_out = compute_outbound_doors(n, m)
@@ -69,7 +76,7 @@ def make_release_times(n, scenario):
         times = []
         for i in range(n):
             if i < max(1, n // 5):
-                times.append(random.randint(rt_max // 2, rt_max))
+                times.append(random.randint(0, rt_max // 6))          
             else:
                 times.append(random.randint(0, rt_max // 3))
         random.shuffle(times)
@@ -128,6 +135,16 @@ def make_transfer_matrix(n, m, scenario):
         for i in range(n):
             row = [random.randint(1, 5) if random.random() < 0.25 else 0 for _ in range(m)]
             matrix.append(row)
+        # garantisce almeno 1 connessione per inbound truck
+        for i in range(n):
+            if all(v == 0 for v in matrix[i]):
+                j = random.randint(0, m - 1)
+                matrix[i][j] = random.randint(1, 5)
+        # garantisce almeno 1 connessione per outbound truck
+        for j in range(m):
+            if all(matrix[i][j] == 0 for i in range(n)):
+                i = random.randint(0, n - 1)
+                matrix[i][j] = random.randint(1, 5)
         return matrix
     elif scenario == "clustered":
         K = max(3, min(6, int((min(n, m)) ** 0.5)))

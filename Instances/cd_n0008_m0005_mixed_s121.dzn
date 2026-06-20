@@ -1,0 +1,8 @@
+InboundTrucks  = 8;
+OutboundTrucks = 5;
+InboundDoors   = 2;
+OutboundDoors  = 1;
+ReleaseTime    = [2,6,18,12,20,5,19,16];
+UnloadTime     = [3,6,23,5,6,4,9,7];
+LoadTime       = [3,4,3,4,17];
+TransferTime   = [| 0,0,2,0,0 | 1,0,0,0,7 | 0,0,1,0,0 | 3,0,6,0,0 | 5,0,0,1,0 | 0,4,1,0,8 | 0,0,0,0,0 | 0,0,0,5,0 |];
