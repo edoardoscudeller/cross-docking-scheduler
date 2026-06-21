@@ -29,6 +29,7 @@ int main(int argc, char* argv[])
     if (in.InboundTrucks() <= 20)
         std::cout << out << std::endl;
 
+    unsigned lb = out.ComputeLowerBound();
     unsigned makespan = out.ComputeMakespan();
 
     auto t_end = std::chrono::steady_clock::now();
@@ -36,9 +37,17 @@ int main(int argc, char* argv[])
     double elapsed_s =
         std::chrono::duration<double>(t_end - t_start).count();
 
-    std::cout << "Makespan : " << makespan << std::endl;
+    std::cout << "Lower Bound : " << lb << std::endl;
+    std::cout << "Makespan    : " << makespan << std::endl;
+
+    std::cout << std::fixed << std::setprecision(2);
+    if (lb > 0)
+        std::cout << "Gap (%)     : " << 100.0 * (makespan - lb) / (double)lb << "%" << std::endl;
+    else
+        std::cout << "Gap (%)     : n/a" << std::endl;
+
     std::cout << std::fixed << std::setprecision(6);
-    std::cout << "CPU time : " << elapsed_s << " s" << std::endl;
+    std::cout << "CPU time    : " << elapsed_s << " s" << std::endl;
 
     return 0;
 }

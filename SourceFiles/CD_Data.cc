@@ -2,6 +2,7 @@
 #include <fstream>
 #include <algorithm>
 #include <numeric>
+#include <cmath>
 
 CD_Input::CD_Input(string file_name)
 {
@@ -168,6 +169,55 @@ unsigned CD_Output::ComputeMakespan() const
   }
 
   return makespan;
+}
+
+// ComputeLowerBound — due contributi indipendenti, si prende il massimo.
+//
+// LB1 — Critical Path per ogni outbound truck j (ignora contesa delle porte):
+//   Per ogni j, il best-case è che venga servito dall'inbound i che minimizza
+//   (release_time[i] + unload_time[i]), quindi goods_ready[j] >= min_i(...) + T[i][j].
+//   LB1 = max_j ( min_i(release_time[i] + unload_time[i]) + transfer_time[i][j] + load_time[j] )
+//   Nota: il min_i è calcolato per ogni j separatamente (si sceglie il percorso critico
+//   ottimista per j, non un unico i globale).
+//
+// LB2 — Carico totale sulle porte inbound (ignora release times e transfer):
+//   LB2 = ceil( sum_i(unload_time[i]) / d_inbound )
+//   Rappresenta il tempo minimo necessario per scaricare tutti i truck
+//   anche con porte perfettamente bilanciate e release_time = 0.
+//
+// Lower Bound = max(LB1, LB2)
+
+unsigned CD_Output::ComputeLowerBound() const
+{
+  // --- LB1: Critical Path su ogni outbound truck j ---
+  unsigned lb1 = 0;
+
+  for (unsigned j = 0; j < in.OutboundTrucks(); j++)
+  {
+    // Per truck j: trova l'inbound i che minimizza (r_i + u_i) + T[i][j]
+    // cioe' il percorso critico ottimistico verso j
+    unsigned best_path = UINT_MAX;
+    for (unsigned i = 0; i < in.InboundTrucks(); i++)
+    {
+      unsigned path = in.ReleaseTime(i) + in.UnloadTime(i) + in.TransferTime(i, j);
+      if (path < best_path)
+        best_path = path;
+    }
+    // Completamento minimo di j = best_path + load_time[j]
+    unsigned completion_j = best_path + in.LoadTime(j);
+    if (completion_j > lb1)
+      lb1 = completion_j;
+  }
+
+  // --- LB2: Carico totale sulle porte inbound ---
+  unsigned total_unload = 0;
+  for (unsigned i = 0; i < in.InboundTrucks(); i++)
+    total_unload += in.UnloadTime(i);
+
+  // ceil(total_unload / d_inbound) con aritmetica intera
+  unsigned lb2 = (total_unload + in.InboundDoors() - 1) / in.InboundDoors();
+
+  return max(lb1, lb2);
 }
 
 ostream& operator<<(ostream& os, const CD_Output& out)

@@ -59,6 +59,7 @@ public:
 
   // Objective function
   unsigned ComputeMakespan() const;
+  unsigned ComputeLowerBound() const;
 
 private:
   const CD_Input& in;

@@ -1,0 +1,608 @@
+========================================
+SCENARIO: uniform
+========================================
+
+Instance name
+cd_n0008_m0005_uniform_s101
+cd_n0012_m0008_uniform_s102
+cd_n0020_m0013_uniform_s103
+cd_n0040_m0020_uniform_s201
+cd_n0060_m0030_uniform_s202
+cd_n0080_m0040_uniform_s203
+
+Seed
+101
+102
+103
+201
+202
+203
+
+Inbound doors
+2
+2
+2
+8
+12
+16
+
+Outbound doors
+1
+1
+1
+4
+6
+8
+
+Makespan
+
+
+
+
+
+
+
+CPU Time (s)
+
+
+
+
+
+
+
+CPU Time (min)
+
+
+
+
+
+
+
+Release time
+[18, 6, 17, 11, 14, 1, 21, 16];
+[9, 22, 10, 35, 11, 24, 18, 27, 36, 2, 33, 34];
+[45, 29, 59, 46, 44, 47, 52, 13, 44, 4, 58, 38, 47, 7, 41, 24, 29, 56, 21, 55];
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Inbound sequence
+5 -> 1 -> 3 -> 4 -> 7 -> 2 -> 0 -> 6
+9 -> 0 -> 2 -> 4 -> 6 -> 1 -> 5 -> 7 -> 10 -> 11 -> 3 -> 8
+9 -> 13 -> 7 -> 18 -> 15 -> 1 -> 16 -> 11 -> 14 -> 4 -> 8 -> 0 -> 3 -> 12 -> 5 -> 6 -> 19 -> 17 -> 10 -> 2
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Outbound sequence
+0 -> 2 -> 4 -> 3 -> 1
+3 -> 7 -> 2 -> 1 -> 5 -> 6 -> 4 -> 0
+9 -> 11 -> 8 -> 7 -> 1 -> 4 -> 6 -> 12 -> 10 -> 5 -> 2 -> 3 -> 0
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+========================================
+SCENARIO: sparse
+========================================
+
+Instance name
+cd_n0008_m0005_sparse_s101
+cd_n0012_m0008_sparse_s102
+cd_n0020_m0013_sparse_s103
+cd_n0040_m0020_sparse_s201
+cd_n0060_m0030_sparse_s202
+cd_n0080_m0040_sparse_s203
+
+Seed
+101
+102
+103
+201
+202
+203
+
+Inbound doors
+2
+2
+2
+8
+12
+16
+
+Outbound doors
+1
+1
+1
+4
+6
+8
+
+Makespan
+
+
+
+
+
+
+
+CPU Time (s)
+
+
+
+
+
+
+
+CPU Time (min)
+
+
+
+
+
+
+
+Release time
+[18, 6, 17, 11, 14, 1, 21, 16];
+[9, 22, 10, 35, 11, 24, 18, 27, 36, 2, 33, 34];
+[45, 29, 59, 46, 44, 47, 52, 13, 44, 4, 58, 38, 47, 7, 41, 24, 29, 56, 21, 55];
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Inbound sequence
+5 -> 1 -> 3 -> 4 -> 7 -> 2 -> 0 -> 6
+9 -> 0 -> 2 -> 4 -> 6 -> 1 -> 5 -> 7 -> 10 -> 11 -> 3 -> 8
+9 -> 13 -> 7 -> 18 -> 15 -> 1 -> 16 -> 11 -> 14 -> 4 -> 8 -> 0 -> 3 -> 12 -> 5 -> 6 -> 19 -> 17 -> 10 -> 2
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Outbound sequence
+0 -> 4 -> 3 -> 2 -> 1
+1 -> 7 -> 4 -> 0 -> 3 -> 5 -> 2 -> 6
+4 -> 12 -> 10 -> 0 -> 7 -> 2 -> 6 -> 9 -> 3 -> 5 -> 11 -> 1 -> 8
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+========================================
+SCENARIO: clustered
+========================================
+
+Instance name
+cd_n0008_m0005_clustered_s101
+cd_n0012_m0008_clustered_s102
+cd_n0020_m0013_clustered_s103
+cd_n0040_m0020_clustered_s201
+cd_n0060_m0030_clustered_s202
+cd_n0080_m0040_clustered_s203
+
+Seed
+101
+102
+103
+201
+202
+203
+
+Inbound doors
+2
+2
+2
+8
+12
+16
+
+Outbound doors
+1
+1
+1
+4
+6
+8
+
+Makespan
+
+
+
+
+
+
+
+CPU Time (s)
+
+
+
+
+
+
+
+CPU Time (min)
+
+
+
+
+
+
+
+Release time
+[18, 6, 17, 11, 14, 1, 21, 16];
+[9, 22, 10, 35, 11, 24, 18, 27, 36, 2, 33, 34];
+[45, 29, 59, 46, 44, 47, 52, 13, 44, 4, 58, 38, 47, 7, 41, 24, 29, 56, 21, 55];
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Inbound sequence
+5 -> 1 -> 3 -> 4 -> 7 -> 2 -> 0 -> 6
+9 -> 0 -> 2 -> 4 -> 6 -> 1 -> 5 -> 7 -> 10 -> 11 -> 3 -> 8
+9 -> 13 -> 7 -> 18 -> 15 -> 1 -> 16 -> 11 -> 14 -> 4 -> 8 -> 0 -> 3 -> 12 -> 5 -> 6 -> 19 -> 17 -> 10 -> 2
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Outbound sequence
+0 -> 4 -> 2 -> 3 -> 1
+6 -> 7 -> 4 -> 2 -> 5 -> 1 -> 3 -> 0
+2 -> 6 -> 10 -> 8 -> 3 -> 1 -> 4 -> 7 -> 12 -> 9 -> 0 -> 5 -> 11
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+========================================
+SCENARIO: asymmetric
+========================================
+
+Instance name
+cd_n0008_m0005_asymmetric_s101
+cd_n0012_m0008_asymmetric_s102
+cd_n0020_m0013_asymmetric_s103
+cd_n0040_m0020_asymmetric_s201
+cd_n0060_m0030_asymmetric_s202
+cd_n0080_m0040_asymmetric_s203
+
+Seed
+101
+102
+103
+201
+202
+203
+
+Inbound doors
+2
+2
+2
+8
+12
+16
+
+Outbound doors
+1
+1
+1
+4
+6
+8
+
+Makespan
+
+
+
+
+
+
+
+CPU Time (s)
+
+
+
+
+
+
+
+CPU Time (min)
+
+
+
+
+
+
+
+Release time
+[18, 6, 17, 11, 14, 1, 21, 16];
+[9, 22, 10, 35, 11, 24, 18, 27, 36, 2, 33, 34];
+[45, 29, 59, 46, 44, 47, 52, 13, 44, 4, 58, 38, 47, 7, 41, 24, 29, 56, 21, 55];
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Inbound sequence
+5 -> 1 -> 3 -> 4 -> 7 -> 2 -> 0 -> 6
+9 -> 0 -> 2 -> 4 -> 6 -> 1 -> 5 -> 7 -> 10 -> 11 -> 3 -> 8
+9 -> 13 -> 7 -> 18 -> 15 -> 1 -> 16 -> 11 -> 14 -> 8 -> 4 -> 0 -> 3 -> 5 -> 12 -> 6 -> 19 -> 17 -> 10 -> 2
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Outbound sequence
+3 -> 1 -> 4 -> 0 -> 2
+2 -> 3 -> 0 -> 4 -> 6 -> 1 -> 7 -> 5
+3 -> 12 -> 0 -> 2 -> 11 -> 8 -> 1 -> 9 -> 10 -> 5 -> 4 -> 6 -> 7
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+========================================
+SCENARIO: congested
+========================================
+
+Instance name
+cd_n0008_m0005_congested_s101
+cd_n0012_m0008_congested_s102
+cd_n0020_m0013_congested_s103
+cd_n0040_m0020_congested_s201
+cd_n0060_m0030_congested_s202
+cd_n0080_m0040_congested_s203
+
+Seed
+101
+102
+103
+201
+202
+203
+
+Inbound doors
+2
+2
+2
+8
+12
+16
+
+Outbound doors
+1
+1
+1
+4
+6
+8
+
+Makespan
+
+
+
+
+
+
+
+CPU Time (s)
+
+
+
+
+
+
+
+CPU Time (min)
+
+
+
+
+
+
+
+Release time
+[4, 1, 4, 2, 3, 0, 5, 4];
+[1, 5, 4, 2, 1, 4, 5, 5, 4, 1, 3, 2];
+[5, 3, 5, 5, 5, 1, 5, 0, 4, 5, 0, 5, 3, 3, 2, 5, 0, 3, 0, 1];
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Inbound sequence
+5 -> 1 -> 3 -> 4 -> 0 -> 2 -> 7 -> 6
+4 -> 9 -> 0 -> 11 -> 3 -> 10 -> 5 -> 8 -> 2 -> 1 -> 6 -> 7
+10 -> 7 -> 18 -> 16 -> 5 -> 19 -> 14 -> 1 -> 12 -> 17 -> 13 -> 8 -> 2 -> 3 -> 6 -> 0 -> 4 -> 15 -> 9 -> 11
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Outbound sequence
+3 -> 1 -> 0 -> 4 -> 2
+7 -> 6 -> 3 -> 5 -> 4 -> 1 -> 2 -> 0
+4 -> 5 -> 8 -> 6 -> 3 -> 10 -> 11 -> 9 -> 12 -> 0 -> 2 -> 1 -> 7
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+========================================
+SCENARIO: urgent
+========================================
+
+Instance name
+cd_n0008_m0005_urgent_s101
+cd_n0012_m0008_urgent_s102
+cd_n0020_m0013_urgent_s103
+cd_n0040_m0020_urgent_s201
+cd_n0060_m0030_urgent_s202
+cd_n0080_m0040_urgent_s203
+
+Seed
+101
+102
+103
+201
+202
+203
+
+Inbound doors
+2
+2
+2
+8
+12
+16
+
+Outbound doors
+1
+1
+1
+4
+6
+8
+
+Makespan
+
+
+
+
+
+
+
+CPU Time (s)
+
+
+
+
+
+
+
+CPU Time (min)
+
+
+
+
+
+
+
+Release time
+[0, 4, 7, 8, 3, 3, 8, 5];
+[2, 9, 10, 5, 6, 5, 8, 9, 1, 4, 11, 2];
+[4, 14, 3, 3, 3, 1, 7, 10, 9, 12, 15, 18, 7, 2, 0, 7, 20, 3, 1, 4];
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Inbound sequence
+0 -> 5 -> 4 -> 1 -> 7 -> 2 -> 6 -> 3
+8 -> 0 -> 11 -> 9 -> 5 -> 3 -> 4 -> 6 -> 1 -> 7 -> 2 -> 10
+14 -> 5 -> 18 -> 13 -> 17 -> 3 -> 2 -> 4 -> 19 -> 0 -> 12 -> 15 -> 6 -> 8 -> 7 -> 9 -> 1 -> 10 -> 11 -> 16
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Outbound sequence
+0 -> 1 -> 2 -> 4 -> 3
+2 -> 0 -> 3 -> 6 -> 4 -> 1 -> 5 -> 7
+1 -> 12 -> 5 -> 11 -> 2 -> 7 -> 9 -> 4 -> 8 -> 6 -> 10 -> 0 -> 3
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+========================================
+SCENARIO: mixed
+========================================
+
+Instance name
+cd_n0008_m0005_mixed_s101
+cd_n0012_m0008_mixed_s102
+cd_n0020_m0013_mixed_s103
+cd_n0040_m0020_mixed_s201
+cd_n0060_m0030_mixed_s202
+cd_n0080_m0040_mixed_s203
+cd_n0300_m0150_mixed_s213
+cd_n0600_m0300_mixed_s214
+
+Seed
+101
+102
+103
+201
+202
+203
+213
+214
+
+Inbound doors
+2
+2
+2
+8
+12
+16
+38
+75
+
+Outbound doors
+1
+1
+1
+4
+6
+8
+19
+38
+
+Makespan
+
+
+
+
+
+
+
+
+
+CPU Time (s)
+
+
+
+
+
+
+
+
+
+CPU Time (min)
+
+
+
+
+
+
+
+
+
+Release time
+[18, 6, 17, 11, 14, 1, 21, 16];
+[9, 22, 10, 35, 11, 24, 18, 27, 36, 2, 33, 34];
+[45, 29, 59, 46, 44, 47, 52, 13, 44, 4, 58, 38, 47, 7, 41, 24, 29, 56, 21, 55];
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Inbound sequence
+5 -> 1 -> 3 -> 4 -> 7 -> 2 -> 0 -> 6
+9 -> 0 -> 2 -> 4 -> 6 -> 1 -> 5 -> 7 -> 10 -> 11 -> 3 -> 8
+9 -> 13 -> 7 -> 18 -> 15 -> 1 -> 16 -> 11 -> 14 -> 4 -> 8 -> 0 -> 3 -> 5 -> 12 -> 6 -> 19 -> 17 -> 10 -> 2
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
+Outbound sequence
+1 -> 3 -> 4 -> 2 -> 0
+6 -> 1 -> 2 -> 7 -> 5 -> 4 -> 3 -> 0
+3 -> 4 -> 5 -> 6 -> 7 -> 9 -> 11 -> 2 -> 12 -> 1 -> 10 -> 8 -> 0
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+(n>20: not printed)
+
