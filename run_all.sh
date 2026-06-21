@@ -111,9 +111,8 @@ for SCENARIO in "${SCENARIOS[@]}"; do
 
       if [ "$N" -le 20 ]; then
         RELEASE=$(echo "$RAW" | awk '/^ReleaseTime/ {sub(/^[^=]*=[[:space:]]*/, "", $0); print; exit}')
-        INBOUND=$(echo "$RAW" | sed -n 's/^Inbound sequence: //p' | head -n 1)
-        OUTBOUND=$(echo "$RAW" | sed -n 's/^Outbound sequence: //p' | head -n 1)
-
+        INBOUND=$(echo "$RAW" | awk 'tolower($0) ~ /^inbound[[:space:]]+sequence:/ {sub(/^[^:]*:[[:space:]]*/, "", $0); print; exit}')
+        OUTBOUND=$(echo "$RAW" | awk 'tolower($0) ~ /^outbound[[:space:]]+sequence:/ {sub(/^[^:]*:[[:space:]]*/, "", $0); print; exit}')
         [ -z "$RELEASE" ] && RELEASE="(n<=20: not found)"
         [ -z "$INBOUND" ] && INBOUND="(n<=20: not found)"
         [ -z "$OUTBOUND" ] && OUTBOUND="(n<=20: not found)"
