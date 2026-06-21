@@ -45,18 +45,18 @@ random.seed(seed)
 def compute_inbound_doors(n):
     if n <= 20:
         return 2
-    elif n <= 150:
+    elif n <= 80:
         return math.ceil(n / 5)
     else:
-        return max(30, math.ceil(n / 8))
+        return math.ceil(n / 8)
 
 def compute_outbound_doors(n, m):
     if n <= 20:
         return 1
-    elif n <= 150:
+    elif n <= 80:
         return math.ceil(m / 5)
     else:
-        return max(15, math.ceil(m / 8))
+        return math.ceil(m / 8)
 
 
 d_in  = compute_inbound_doors(n)
