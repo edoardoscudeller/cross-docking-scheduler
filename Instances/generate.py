@@ -13,7 +13,6 @@ if len(sys.argv) < 3:
     print("Scenari: uniform (default), sparse, asymmetric, congested, urgent, clustered, mixed")
     sys.exit(1)
 
-
 n        = int(sys.argv[1])
 m        = int(sys.argv[2])
 seed     = int(sys.argv[3]) if len(sys.argv) > 3 else n * m + 7
@@ -39,13 +38,9 @@ random.seed(seed)
 # Regola:
 #   n <= 20        : d_in = 2,  d_out = 1  (minimo fisico plausibile)
 #   20 < n <= 80  : d_in = ceil(n/5),  d_out = ceil(m/5)
-#                    coerente con le configurazioni di Boysen et al. (2010)
-#                    [doi:10.1007/s00291-008-0139-0] e Nassief et al. (2016)
-#                    [doi:10.1080/00207543.2014.1003664]
-#   n > 80        : d_in = max(30, ceil(n/8)),  d_out = max(15, ceil(m/8))
-#                    estrapolazione conservativa per simulare la saturazione
-#                    fisica del dock nei terminal ad alto volume; il max()
-#                    garantisce continuità al confine n=150.
+#                    coerente con le configurazioni di Boysen et al. (2010) e Nassief et al. (2016)
+#   n > 80        : d_in = max(16, ceil(n/8)),  d_out = max(16, ceil(m/8))
+#                    il max() garantisce continuità al confine n=150.
 # # ---------------------------------------------------------------------------
 def compute_inbound_doors(n):
     if n <= 20:
@@ -53,7 +48,7 @@ def compute_inbound_doors(n):
     elif n <= 80:
         return math.ceil(n / 5)
     else:
-        return math.ceil(n / 8)
+        return max(16, math.ceil(n / 8))
 
 
 def compute_outbound_doors(n, m):
@@ -62,7 +57,11 @@ def compute_outbound_doors(n, m):
     elif n <= 80:
         return math.ceil(m / 5)
     else:
-        return math.ceil(m / 8)
+        return max(16, math.ceil(m / 8))
+
+
+d_in  = compute_inbound_doors(n)
+d_out = compute_outbound_doors(n, m)
 
 
 
