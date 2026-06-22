@@ -4,6 +4,7 @@ import math
 from pathlib import Path
 
 
+
 # ---------------------------------------------------------------------------
 # Parsing argomenti
 # ---------------------------------------------------------------------------
@@ -12,17 +13,21 @@ if len(sys.argv) < 3:
     print("Scenari: uniform (default), sparse, asymmetric, congested, urgent, clustered, mixed")
     sys.exit(1)
 
+
 n        = int(sys.argv[1])
 m        = int(sys.argv[2])
 seed     = int(sys.argv[3]) if len(sys.argv) > 3 else n * m + 7
 scenario = sys.argv[4].lower() if len(sys.argv) > 4 else "uniform"
+
 
 if scenario not in {"uniform", "sparse", "asymmetric", "congested", "urgent", "clustered", "mixed"}:
     print(f"Scenario '{scenario}' non riconosciuto.")
     print("Scenari validi: uniform, sparse, asymmetric, congested, urgent, clustered, mixed")
     sys.exit(1)
 
+
 random.seed(seed)
+
 
 
 # ---------------------------------------------------------------------------
@@ -50,6 +55,7 @@ def compute_inbound_doors(n):
     else:
         return math.ceil(n / 8)
 
+
 def compute_outbound_doors(n, m):
     if n <= 20:
         return 1
@@ -59,13 +65,16 @@ def compute_outbound_doors(n, m):
         return math.ceil(m / 8)
 
 
+
 d_in  = compute_inbound_doors(n)
 d_out = compute_outbound_doors(n, m)
+
 
 
 # ---------------------------------------------------------------------------
 # Funzioni di supporto
 # ---------------------------------------------------------------------------
+
 
 def make_release_times(n, scenario):
     rt_max = max(20, n * 3)
@@ -76,13 +85,14 @@ def make_release_times(n, scenario):
         times = []
         for i in range(n):
             if i < max(1, n // 5):
-                times.append(random.randint(0, rt_max // 6))          
+                times.append(random.randint(0, rt_max // 6))
             else:
                 times.append(random.randint(0, rt_max // 3))
         random.shuffle(times)
         return times
     else:
         return [random.randint(0, rt_max) for _ in range(n)]
+
 
 
 def make_processing_times(n, m, scenario):
@@ -127,6 +137,7 @@ def make_processing_times(n, m, scenario):
     return unload_time, load_time
 
 
+
 def make_transfer_matrix(n, m, scenario):
     if scenario == "uniform":
         return [[random.randint(1, 5) for _ in range(m)] for _ in range(n)]
@@ -135,12 +146,10 @@ def make_transfer_matrix(n, m, scenario):
         for i in range(n):
             row = [random.randint(1, 5) if random.random() < 0.25 else 0 for _ in range(m)]
             matrix.append(row)
-        # garantisce almeno 1 connessione per inbound truck
         for i in range(n):
             if all(v == 0 for v in matrix[i]):
                 j = random.randint(0, m - 1)
                 matrix[i][j] = random.randint(1, 5)
-        # garantisce almeno 1 connessione per outbound truck
         for j in range(m):
             if all(matrix[i][j] == 0 for i in range(n)):
                 i = random.randint(0, n - 1)
@@ -177,6 +186,14 @@ def make_transfer_matrix(n, m, scenario):
                 else:
                     row.append(random.randint(1, 5) if random.random() < 0.30 else 0)
             matrix.append(row)
+        for i in range(n):
+            if all(v == 0 for v in matrix[i]):
+                j = random.randint(0, m - 1)
+                matrix[i][j] = random.randint(1, 2)
+        for j in range(m):
+            if all(matrix[i][j] == 0 for i in range(n)):
+                i = random.randint(0, n - 1)
+                matrix[i][j] = random.randint(1, 2)
         return matrix
     elif scenario == "mixed":
         K = max(3, min(5, int((min(n, m)) ** 0.5)))
@@ -202,6 +219,7 @@ def make_transfer_matrix(n, m, scenario):
     return [[random.randint(1, 5) for _ in range(m)] for _ in range(n)]
 
 
+
 # ---------------------------------------------------------------------------
 # Generazione
 # ---------------------------------------------------------------------------
@@ -210,15 +228,18 @@ unload_time, load_time  = make_processing_times(n, m, scenario)
 transfer_time           = make_transfer_matrix(n, m, scenario)
 
 
+
 # ---------------------------------------------------------------------------
 # Scrittura file .dzn
 # ---------------------------------------------------------------------------
 def fmt_array(v):
     return "[" + ",".join(map(str, v)) + "]"
 
+
 rows = " | ".join(",".join(map(str, row)) for row in transfer_time)
 filename = f"cd_n{n:04d}_m{m:04d}_{scenario}_s{seed}.dzn"
 path = Path(__file__).parent / filename
+
 
 with open(path, "w") as f:
     f.write(f"InboundTrucks  = {n};\n")
@@ -229,5 +250,6 @@ with open(path, "w") as f:
     f.write(f"UnloadTime     = {fmt_array(unload_time)};\n")
     f.write(f"LoadTime       = {fmt_array(load_time)};\n")
     f.write(f"TransferTime   = [| {rows} |];\n")
+
 
 print(f"Generated {path}  [d_in={d_in}, d_out={d_out}]")

@@ -120,6 +120,8 @@ void CD_Output::Reset()
 // Questo helper centralizza il calcolo usato sia dal greedy sia dal makespan,
 // evitando duplicazione della logica di simulazione inbound + propagazione
 // verso gli outbound truck.
+// Solo le coppie (i,j) con transfer_time > 0 contribuiscono: lo zero indica
+// assenza di connessione fisica tra l'inbound i e l'outbound j.
 vector<unsigned> CD_Output::ComputeGoodsReadyFromCurrentInbound() const
 {
   vector<unsigned> finish_unload(in.InboundTrucks(), 0);
@@ -132,10 +134,8 @@ vector<unsigned> CD_Output::ComputeGoodsReadyFromCurrentInbound() const
 
     assert(door < in.InboundDoors());
 
-    const unsigned start_unload =
-      max(door_free_in[door], in.ReleaseTime(truck));
-    const unsigned finish =
-      start_unload + in.UnloadTime(truck);
+    const unsigned start_unload = max(door_free_in[door], in.ReleaseTime(truck));
+    const unsigned finish = start_unload + in.UnloadTime(truck);
 
     finish_unload[truck] = finish;
     door_free_in[door]   = finish;
@@ -144,11 +144,13 @@ vector<unsigned> CD_Output::ComputeGoodsReadyFromCurrentInbound() const
   vector<unsigned> goods_ready(in.OutboundTrucks(), 0);
   for (unsigned j = 0; j < in.OutboundTrucks(); j++)
     for (unsigned i = 0; i < in.InboundTrucks(); i++)
-      goods_ready[j] = max(goods_ready[j],
-                           finish_unload[i] + in.TransferTime(i, j));
+      if (in.TransferTime(i, j) > 0)
+        goods_ready[j] = max(goods_ready[j],
+                             finish_unload[i] + in.TransferTime(i, j));
 
   return goods_ready;
 }
+
 
 // ComputeMakespan — valuta la soluzione gia' costruita.
 //
