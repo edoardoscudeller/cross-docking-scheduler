@@ -47,10 +47,13 @@ SCENARIOS=(uniform sparse clustered asymmetric congested urgent mixed)
 
 > "$OUTPUT"
 
-if [ ! -x "$BINARY" ]; then
-  echo "Errore: binario $BINARY non trovato o non eseguibile."
-  echo "Se il binario si chiama CD_Test invece di CD_Test.exe, modifica la variabile BINARY."
-  exit 1
+if [ -x "./SourceFiles/CD_Test.exe" ]; then
+    BINARY="./SourceFiles/CD_Test.exe"
+elif [ -x "./SourceFiles/CD_Test" ]; then
+    BINARY="./SourceFiles/CD_Test"
+else
+    echo "Errore: nessun binario trovato (né CD_Test.exe né CD_Test)."
+    exit 1
 fi
 
 if [ ! -d "$INSTANCES_DIR" ]; then

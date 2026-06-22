@@ -186,47 +186,92 @@ unsigned CD_Output::ComputeMakespan() const
   return makespan;
 }
 
-// ComputeLowerBound — due contributi indipendenti, si prende il massimo.
+
+// ComputeLowerBound — calcola un limite inferiore al makespan ottimo.
 //
-// LB1 — Critical Path per ogni outbound truck j (ignora contesa delle porte):
-//   Per ogni j, il best-case è che venga servito dall'inbound i che minimizza
-//   (release_time[i] + unload_time[i]), quindi goods_ready[j] >= min_i(...) + T[i][j].
-//   LB1 = max_j ( min_i(release_time[i] + unload_time[i] + transfer_time[i][j]) + load_time[j] )
-//   Nota: il min_i è calcolato per ogni j separatamente (si sceglie il percorso critico
-//   ottimista per j, non un unico i globale).
+// L'idea di base: calcoliamo 4 "tempi minimi garantiti" che la soluzione
+// non può MAI battere, indipendentemente da come ordini i camion.
+// Il lower bound finale è il massimo tra i quattro.
 //
-// LB2 — Carico totale sulle porte inbound (ignora release times e transfer):
-//   LB2 = ceil( sum_i(unload_time[i]) / d_inbound )
-//   Rappresenta il tempo minimo necessario per scaricare tutti i truck
-//   anche con porte perfettamente bilanciate e release_time = 0.
+// LB1 — "Quanto tardi può andare il camion outbound più sfortunato?"
+//   Per ogni camion outbound j, chiediamo: qual è il prima assoluto
+//   in cui la sua merce può essere pronta, nel caso migliore?
+//   La risposta è: prendi l'inbound i che finisce di scaricare prima
+//   e ha merce da mandare a j. Da quel momento, aggiungi il tempo
+//   di carico di j. Il makespan non può essere meno del massimo
+//   di questi valori su tutti i j.
 //
-// Lower Bound = max(LB1, LB2)
+// LB2 — "Le porte inbound sono un collo di bottiglia?"
+//   Somma tutti i tempi di scarico degli inbound. Dividi per il numero
+//   di porte inbound disponibili. Anche se le porte lavorassero sempre
+//   senza pause e tutti i camion arrivassero subito, non puoi finire
+//   prima di questo tempo.
+//
+// LB3 — "Le porte outbound sono un collo di bottiglia?"
+//   Stesso ragionamento di LB2, ma sul lato uscita: somma tutti i
+//   tempi di carico degli outbound e dividi per le porte outbound.
+//
+// LB4 — "Quanto tardi può andare il camion inbound più sfortunato?"
+//   Per ogni camion inbound i, anche se lo scheduli per primo e usa
+//   la porta subito libera, non può finire di scaricare e spedire la
+//   merce prima di: release_time[i] + unload_time[i] + il trasferimento
+//   minimo verso qualunque outbound. Il makespan non può essere meno
+//   del massimo di questi valori su tutti gli i.
 
 unsigned CD_Output::ComputeLowerBound() const
 {
-  // --- LB1: Critical Path su ogni outbound truck j ---
-  unsigned lb1 = 0;
+    // LB1 — Critical Path per ogni outbound truck j
+    unsigned lb1 = 0;
+    for (unsigned j = 0; j < in.OutboundTrucks(); j++)
+    {
+        unsigned best_j = UINT_MAX;
+        for (unsigned i = 0; i < in.InboundTrucks(); i++)
+        {
+            if (in.TransferTime(i, j) > 0) 
+            {
+                unsigned candidate = in.ReleaseTime(i) + in.UnloadTime(i) + in.TransferTime(i, j);
+                if (candidate < best_j)
+                    best_j = candidate;
+            }
+        }
+        if (best_j < UINT_MAX)
+            lb1 = max(lb1, best_j + in.LoadTime(j));
+    }
 
-  for (unsigned j = 0; j < in.OutboundTrucks(); j++)
-  {
-    unsigned best_j = in.ReleaseTime(0) + in.UnloadTime(0) + in.TransferTime(0, j);
+    // LB2 — Carico totale sulle porte inbound
+    unsigned total_unload = 0;
+    for (unsigned i = 0; i < in.InboundTrucks(); i++)
+        total_unload += in.UnloadTime(i);
+    unsigned lb2 = (unsigned)ceil((double)total_unload / in.InboundDoors());
 
-    for (unsigned i = 1; i < in.InboundTrucks(); i++)
-      best_j = min(best_j,
-                   in.ReleaseTime(i) + in.UnloadTime(i) + in.TransferTime(i, j));
+    // LB3 — Carico totale sulle porte outbound
+    unsigned total_load = 0;
+    for (unsigned j = 0; j < in.OutboundTrucks(); j++)
+        total_load += in.LoadTime(j);
+    unsigned lb3 = (unsigned)ceil((double)total_load / in.OutboundDoors());
 
-    lb1 = max(lb1, best_j + in.LoadTime(j));
-  }
-
-  // --- LB2: carico totale sulle porte inbound ---
-  unsigned total_unload = 0;
-  for (unsigned i = 0; i < in.InboundTrucks(); i++)
-    total_unload += in.UnloadTime(i);
-
-  unsigned lb2 = (unsigned)ceil((double)total_unload / in.InboundDoors());
-
-  return max(lb1, lb2);
+    // LB4 — Critical Path per ogni inbound truck i
+    unsigned lb4 = 0;
+    for (unsigned i = 0; i < in.InboundTrucks(); i++)
+    {
+        unsigned min_transfer = UINT_MAX;
+        for (unsigned j = 0; j < in.OutboundTrucks(); j++)
+        {
+            if (in.TransferTime(i, j) > 0 && in.TransferTime(i, j) < min_transfer)
+                min_transfer = in.TransferTime(i, j);
+        }
+        if (min_transfer < UINT_MAX) 
+        {
+            unsigned path_i = in.ReleaseTime(i) + in.UnloadTime(i) + min_transfer;
+            if (path_i > lb4)
+                lb4 = path_i;
+        }
+    }
+    // Lower Bound finale = max(LB1, LB2, LB3, LB4)
+    return max({lb1, lb2, lb3, lb4});
 }
+
+
 
 ostream& operator<<(ostream& os, const CD_Output& out)
 {
