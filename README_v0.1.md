@@ -194,15 +194,6 @@ For small sizes (n ≤ 20), three random seeds are provided per scenario; for la
 
 ---
 
-## Roadmap
-
-- [ ] **v0.2** — Local Search (swap / insert moves on inbound/outbound sequences)
-- [ ] Simulated Annealing or Tabu Search metaheuristic
-- [ ] Comparison against exact MiniZinc model on small instances
-- [ ] Statistical analysis across seeds and scenarios
-
----
-
 ## License
 
 Academic project — University of Udine.  

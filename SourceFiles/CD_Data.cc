@@ -114,58 +114,73 @@ void CD_Output::Reset()
   fill(outbound_door.begin(), outbound_door.end(), 0);
 }
 
-// ComputeMakespan — multi-door, politica EAD (Earliest Available Door)
+// Ricostruisce finish_unload dalla soluzione inbound memorizzata in CD_Output
+// e calcola goods_ready[j] = max_i (finish_unload[i] + transfer_time[i][j]).
 //
-// INBOUND: d_inbound porte parallele.
-//   Per ogni truck nella sequenza si assegna la porta con door_free minore.
-//   finish_unload[i] = max(door_free[EAD], release_time[i]) + unload_time[i]
-//
-// OUTBOUND: d_outbound porte parallele, stessa politica EAD.
-//   start[j] = max(door_free[EAD], goods_ready[j])
-//   finish[j] = start[j] + load_time[j]
-//
-// Makespan = max finish su tutti gli outbound truck.
-
-unsigned CD_Output::ComputeMakespan() const
+// Questo helper centralizza il calcolo usato sia dal greedy sia dal makespan,
+// evitando duplicazione della logica di simulazione inbound + propagazione
+// verso gli outbound truck.
+vector<unsigned> CD_Output::ComputeGoodsReadyFromCurrentInbound() const
 {
-  // Step 1: finish_unload[i] con porte inbound parallele
   vector<unsigned> finish_unload(in.InboundTrucks(), 0);
   vector<unsigned> door_free_in(in.InboundDoors(), 0);
 
   for (unsigned pos = 0; pos < in.InboundTrucks(); pos++)
   {
-    unsigned best_door = 0;
-    for (unsigned d = 1; d < in.InboundDoors(); d++)
-      if (door_free_in[d] < door_free_in[best_door])
-        best_door = d;
+    const unsigned truck = inbound_seq[pos];
+    const unsigned door  = inbound_door[pos];
 
-    finish_unload[inbound_seq[pos]] =
-      max(door_free_in[best_door], in.ReleaseTime(inbound_seq[pos]))
-      + in.UnloadTime(inbound_seq[pos]);
-    door_free_in[best_door] = finish_unload[inbound_seq[pos]];
+    assert(door < in.InboundDoors());
+
+    const unsigned start_unload =
+      max(door_free_in[door], in.ReleaseTime(truck));
+    const unsigned finish =
+      start_unload + in.UnloadTime(truck);
+
+    finish_unload[truck] = finish;
+    door_free_in[door]   = finish;
   }
 
-  // Step 2: goods_ready[j]
   vector<unsigned> goods_ready(in.OutboundTrucks(), 0);
   for (unsigned j = 0; j < in.OutboundTrucks(); j++)
     for (unsigned i = 0; i < in.InboundTrucks(); i++)
-      goods_ready[j] = max(goods_ready[j], finish_unload[i] + in.TransferTime(i, j));
+      goods_ready[j] = max(goods_ready[j],
+                           finish_unload[i] + in.TransferTime(i, j));
 
-  // Step 3: makespan con porte outbound parallele
+  return goods_ready;
+}
+
+// ComputeMakespan — valuta la soluzione gia' costruita.
+//
+// Non ricalcola piu' sequencing e assegnazioni porte; usa:
+//   - inbound_seq + inbound_door
+//   - outbound_seq + outbound_door
+//
+// goods_ready e' ricavato dalla soluzione inbound memorizzata.
+// Poi si simula il lato outbound seguendo esattamente le porte assegnate
+// nella soluzione, ottenendo il makespan coerente con la soluzione stessa.
+
+unsigned CD_Output::ComputeMakespan() const
+{
+  vector<unsigned> goods_ready = ComputeGoodsReadyFromCurrentInbound();
+
   vector<unsigned> door_free_out(in.OutboundDoors(), 0);
   unsigned makespan = 0;
 
   for (unsigned pos = 0; pos < in.OutboundTrucks(); pos++)
   {
-    unsigned best_door = 0;
-    for (unsigned d = 1; d < in.OutboundDoors(); d++)
-      if (door_free_out[d] < door_free_out[best_door])
-        best_door = d;
+    const unsigned truck = outbound_seq[pos];
+    const unsigned door  = outbound_door[pos];
 
-    door_free_out[best_door] =
-      max(door_free_out[best_door], goods_ready[outbound_seq[pos]])
-      + in.LoadTime(outbound_seq[pos]);
-    makespan = max(makespan, door_free_out[best_door]);
+    assert(door < in.OutboundDoors());
+
+    const unsigned start_load =
+      max(door_free_out[door], goods_ready[truck]);
+    const unsigned finish =
+      start_load + in.LoadTime(truck);
+
+    door_free_out[door] = finish;
+    makespan = max(makespan, finish);
   }
 
   return makespan;
@@ -176,7 +191,7 @@ unsigned CD_Output::ComputeMakespan() const
 // LB1 — Critical Path per ogni outbound truck j (ignora contesa delle porte):
 //   Per ogni j, il best-case è che venga servito dall'inbound i che minimizza
 //   (release_time[i] + unload_time[i]), quindi goods_ready[j] >= min_i(...) + T[i][j].
-//   LB1 = max_j ( min_i(release_time[i] + unload_time[i]) + transfer_time[i][j] + load_time[j] )
+//   LB1 = max_j ( min_i(release_time[i] + unload_time[i] + transfer_time[i][j]) + load_time[j] )
 //   Nota: il min_i è calcolato per ogni j separatamente (si sceglie il percorso critico
 //   ottimista per j, non un unico i globale).
 //
@@ -194,41 +209,36 @@ unsigned CD_Output::ComputeLowerBound() const
 
   for (unsigned j = 0; j < in.OutboundTrucks(); j++)
   {
-    // Per truck j: trova l'inbound i che minimizza (r_i + u_i) + T[i][j]
-    // cioe' il percorso critico ottimistico verso j
-    unsigned best_path = UINT_MAX;
-    for (unsigned i = 0; i < in.InboundTrucks(); i++)
-    {
-      unsigned path = in.ReleaseTime(i) + in.UnloadTime(i) + in.TransferTime(i, j);
-      if (path < best_path)
-        best_path = path;
-    }
-    // Completamento minimo di j = best_path + load_time[j]
-    unsigned completion_j = best_path + in.LoadTime(j);
-    if (completion_j > lb1)
-      lb1 = completion_j;
+    unsigned best_j = in.ReleaseTime(0) + in.UnloadTime(0) + in.TransferTime(0, j);
+
+    for (unsigned i = 1; i < in.InboundTrucks(); i++)
+      best_j = min(best_j,
+                   in.ReleaseTime(i) + in.UnloadTime(i) + in.TransferTime(i, j));
+
+    lb1 = max(lb1, best_j + in.LoadTime(j));
   }
 
-  // --- LB2: Carico totale sulle porte inbound ---
+  // --- LB2: carico totale sulle porte inbound ---
   unsigned total_unload = 0;
   for (unsigned i = 0; i < in.InboundTrucks(); i++)
     total_unload += in.UnloadTime(i);
 
-  // ceil(total_unload / d_inbound) con aritmetica intera
-  unsigned lb2 = (total_unload + in.InboundDoors() - 1) / in.InboundDoors();
+  unsigned lb2 = (unsigned)ceil((double)total_unload / in.InboundDoors());
 
   return max(lb1, lb2);
 }
 
 ostream& operator<<(ostream& os, const CD_Output& out)
 {
-  os << "Inbound  sequence: ";
-  for (unsigned pos = 0; pos < out.in.InboundTrucks(); pos++)
-    os << out.inbound_seq[pos] << (pos+1 < out.in.InboundTrucks() ? " -> " : "\n");
+  os << "Inbound sequence : ";
+  for (unsigned i = 0; i < out.in.InboundTrucks(); i++)
+    os << out.inbound_seq[i] << "(" << out.inbound_door[i] << ") ";
+  os << endl;
 
   os << "Outbound sequence: ";
-  for (unsigned pos = 0; pos < out.in.OutboundTrucks(); pos++)
-    os << out.outbound_seq[pos] << (pos+1 < out.in.OutboundTrucks() ? " -> " : "\n");
+  for (unsigned j = 0; j < out.in.OutboundTrucks(); j++)
+    os << out.outbound_seq[j] << "(" << out.outbound_door[j] << ") ";
+  os << endl;
 
   return os;
 }

@@ -57,6 +57,9 @@ public:
   void SetInboundDoor(const vector<unsigned>& d)   { inbound_door  = d; }
   void SetOutboundDoor(const vector<unsigned>& d)  { outbound_door = d; }
 
+  // Helper per il greedy / valutazione
+  vector<unsigned> ComputeGoodsReadyFromCurrentInbound() const;
+
   // Objective function
   unsigned ComputeMakespan() const;
   unsigned ComputeLowerBound() const;
