@@ -170,6 +170,14 @@ def make_transfer_matrix(n, m, scenario):
                 else:
                     row.append(random.randint(1, 3) if random.random() < 0.10 else 0)
             matrix.append(row)
+        for i in range(n):
+            if all(v == 0 for v in matrix[i]):
+                j = random.randint(0, m - 1)
+                matrix[i][j] = random.randint(1, 5)
+        for j in range(m):
+            if all(matrix[i][j] == 0 for i in range(n)):
+                i = random.randint(0, n - 1)
+                matrix[i][j] = random.randint(1, 5)
         return matrix
     elif scenario == "asymmetric":
         return [[random.randint(1, 10) for _ in range(m)] for _ in range(n)]
@@ -215,6 +223,14 @@ def make_transfer_matrix(n, m, scenario):
                 else:
                     row.append(0)
             matrix.append(row)
+        for i in range(n):
+            if all(v == 0 for v in matrix[i]):
+                j = random.randint(0, m - 1)
+                matrix[i][j] = random.randint(1, 5)
+        for j in range(m):
+            if all(matrix[i][j] == 0 for i in range(n)):
+                i = random.randint(0, n - 1)
+                matrix[i][j] = random.randint(1, 5)
         return matrix
     return [[random.randint(1, 5) for _ in range(m)] for _ in range(n)]
 
