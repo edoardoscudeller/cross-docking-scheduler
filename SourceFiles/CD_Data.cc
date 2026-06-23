@@ -6,52 +6,52 @@
 
 CD_Input::CD_Input(string file_name)
 {
-    const unsigned MAX_DIM = 256;
-    unsigned i, j;
-    char ch, buffer[MAX_DIM];
+  const unsigned MAX_DIM = 256;
+  unsigned i, j;
+  char ch, buffer[MAX_DIM];
 
-    ifstream is(file_name);
-    if (!is)
-    {
-        cerr << "Cannot open input file: " << file_name << endl;
-        exit(1);
-    }
+  ifstream is(file_name);
+  if (!is)
+  {
+      cerr << "Cannot open input file: " << file_name << endl;
+      exit(1);
+  }
 
-    // InboundTrucks = N;
-    is >> buffer >> ch >> n_inbound >> ch;
-    // OutboundTrucks = M;
-    is >> buffer >> ch >> n_outbound >> ch;
-    // InboundDoors = D_IN;
-    is >> buffer >> ch >> d_inbound >> ch;
-    // OutboundDoors = D_OUT;
-    is >> buffer >> ch >> d_outbound >> ch;
+  // InboundTrucks = N;
+  is >> buffer >> ch >> n_inbound >> ch;
+  // OutboundTrucks = M;
+  is >> buffer >> ch >> n_outbound >> ch;
+  // InboundDoors = D_IN;
+  is >> buffer >> ch >> d_inbound >> ch;
+  // OutboundDoors = D_OUT;
+  is >> buffer >> ch >> d_outbound >> ch;
 
-    release_time.resize(n_inbound);
-    unload_time.resize(n_inbound);
-    load_time.resize(n_outbound);
-    transfer_time.resize(n_inbound, vector<unsigned>(n_outbound));
+  release_time.resize(n_inbound);
+  unload_time.resize(n_inbound);
+  load_time.resize(n_outbound);
+  transfer_time.resize(n_inbound, vector<unsigned>(n_outbound));
 
-    // ReleaseTime
-    is.ignore(MAX_DIM, '[');
-    for (i = 0; i < n_inbound; i++)
-        is >> release_time[i] >> ch;
+  // ReleaseTime
+  is.ignore(MAX_DIM, '[');
+  for (i = 0; i < n_inbound; i++)
+      is >> release_time[i] >> ch;
 
-    // UnloadTime
-    is.ignore(MAX_DIM, '[');
-    for (i = 0; i < n_inbound; i++)
-        is >> unload_time[i] >> ch;
+  // UnloadTime
+  is.ignore(MAX_DIM, '[');
+  for (i = 0; i < n_inbound; i++)
+      is >> unload_time[i] >> ch;
 
-    // LoadTime
-    is.ignore(MAX_DIM, '[');
-    for (j = 0; j < n_outbound; j++)
-        is >> load_time[j] >> ch;
+  // LoadTime
+  is.ignore(MAX_DIM, '[');
+  for (j = 0; j < n_outbound; j++)
+      is >> load_time[j] >> ch;
 
-    // TransferTime
-    is.ignore(MAX_DIM, '[');
-    is >> ch;  // consume first '|'
-    for (i = 0; i < n_inbound; i++)
-        for (j = 0; j < n_outbound; j++)
-            is >> transfer_time[i][j] >> ch;
+  // TransferTime
+  is.ignore(MAX_DIM, '[');
+  is >> ch;  // consume first '|'
+  for (i = 0; i < n_inbound; i++)
+      for (j = 0; j < n_outbound; j++)
+          is >> transfer_time[i][j] >> ch;
 }
 
 ostream& operator<<(ostream& os, const CD_Input& in)
@@ -129,25 +129,22 @@ vector<unsigned> CD_Output::ComputeGoodsReadyFromCurrentInbound() const
 
   for (unsigned pos = 0; pos < in.InboundTrucks(); pos++)
   {
-    const unsigned truck = inbound_seq[pos];
-    const unsigned door  = inbound_door[pos];
+    assert(inbound_door[pos] < in.InboundDoors());
 
-    assert(door < in.InboundDoors());
+    unsigned start_unload = max(door_free_in[inbound_door[pos]], in.ReleaseTime(inbound_seq[pos]));
+    unsigned finish = start_unload + in.UnloadTime(inbound_seq[pos]);
 
-    const unsigned start_unload = max(door_free_in[door], in.ReleaseTime(truck));
-    const unsigned finish = start_unload + in.UnloadTime(truck);
-
-    finish_unload[truck] = finish;
-    door_free_in[door]   = finish;
+    finish_unload[inbound_seq[pos]] = finish;
+    door_free_in[inbound_door[pos]]   = finish;
   }
 
   vector<unsigned> goods_ready(in.OutboundTrucks(), 0);
+  
   for (unsigned j = 0; j < in.OutboundTrucks(); j++)
     for (unsigned i = 0; i < in.InboundTrucks(); i++)
       if (in.TransferTime(i, j) > 0)
         goods_ready[j] = max(goods_ready[j],
                              finish_unload[i] + in.TransferTime(i, j));
-
   return goods_ready;
 }
 
@@ -171,20 +168,12 @@ unsigned CD_Output::ComputeMakespan() const
 
   for (unsigned pos = 0; pos < in.OutboundTrucks(); pos++)
   {
-    const unsigned truck = outbound_seq[pos];
-    const unsigned door  = outbound_door[pos];
+    unsigned start_load = max(door_free_out[outbound_door[pos]], goods_ready[outbound_seq[pos]]);
+    unsigned finish = start_load + in.LoadTime(outbound_seq[pos]);
 
-    assert(door < in.OutboundDoors());
-
-    const unsigned start_load =
-      max(door_free_out[door], goods_ready[truck]);
-    const unsigned finish =
-      start_load + in.LoadTime(truck);
-
-    door_free_out[door] = finish;
+    door_free_out[outbound_door[pos]] = finish;
     makespan = max(makespan, finish);
   }
-
   return makespan;
 }
 
@@ -244,13 +233,13 @@ unsigned CD_Output::ComputeLowerBound() const
     unsigned total_unload = 0;
     for (unsigned i = 0; i < in.InboundTrucks(); i++)
         total_unload += in.UnloadTime(i);
-    unsigned lb2 = (unsigned)ceil((double)total_unload / in.InboundDoors());
+    unsigned lb2 = ceil((double)total_unload / in.InboundDoors());
 
     // LB3 — Carico totale sulle porte outbound
     unsigned total_load = 0;
     for (unsigned j = 0; j < in.OutboundTrucks(); j++)
         total_load += in.LoadTime(j);
-    unsigned lb3 = (unsigned)ceil((double)total_load / in.OutboundDoors());
+    unsigned lb3 = ceil((double)total_load / in.OutboundDoors());
 
     // LB4 — Critical Path per ogni inbound truck i
     unsigned lb4 = 0;
