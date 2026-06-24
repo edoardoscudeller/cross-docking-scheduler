@@ -2,6 +2,9 @@
 #include <cstdlib>
 #include <chrono>
 #include <iomanip>
+#include <vector>
+#include <numeric>
+#include <algorithm>
 #include "CD_Data.hh"
 #include "CD_Greedy.hh"
 
@@ -13,29 +16,27 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    auto t_start = std::chrono::steady_clock::now();
-
     CD_Input  in(argv[1]);
     CD_Output out(in);
 
-    if (in.InboundTrucks() <= 20)
-        std::cout << in << std::endl;
+    std::vector<unsigned> init_seq(in.InboundTrucks());
+    std::iota(init_seq.begin(), init_seq.end(), 0);
+    std::sort(init_seq.begin(), init_seq.end(), [&in](unsigned a, unsigned b) {
+        return in.ReleaseTime(a) < in.ReleaseTime(b);
+    });
 
-    std::cout << "Doors : in=" << in.InboundDoors()
-              << " out=" << in.OutboundDoors() << std::endl;
+    std::cout << "Initial Arrival  : ";
+    for (unsigned i : init_seq) {
+        std::cout << i << "(t=" << in.ReleaseTime(i) << ") ";
+    }
+    std::cout << std::endl;
 
     GreedyCDSolver(in, out);
 
-    if (in.InboundTrucks() <= 20)
-        std::cout << out << std::endl;
+    std::cout << out; // Stampa Inbound e Outbound sequences
 
     unsigned lb = out.ComputeLowerBound();
     unsigned makespan = out.ComputeMakespan();
-
-    auto t_end = std::chrono::steady_clock::now();
-
-    double elapsed_s =
-        std::chrono::duration<double>(t_end - t_start).count();
 
     std::cout << "Lower Bound : " << lb << std::endl;
     std::cout << "Makespan    : " << makespan << std::endl;
@@ -45,9 +46,6 @@ int main(int argc, char* argv[])
         std::cout << "Gap (%)     : " << 100.0 * (makespan - lb) / (double)lb << "%" << std::endl;
     else
         std::cout << "Gap (%)     : n/a" << std::endl;
-
-    std::cout << std::fixed << std::setprecision(6);
-    std::cout << "CPU time    : " << elapsed_s << " s" << std::endl;
 
     return 0;
 }
