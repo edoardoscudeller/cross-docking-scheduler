@@ -178,36 +178,12 @@ unsigned CD_Output::ComputeMakespan() const
 }
 
 
-// ComputeLowerBound — calcola un limite inferiore al makespan ottimo.
-//
-// L'idea di base: calcoliamo 4 "tempi minimi garantiti" che la soluzione
-// non può MAI battere, indipendentemente da come ordini i camion.
-// Il lower bound finale è il massimo tra i quattro.
-//
-// LB1 — "Quanto tardi può andare il camion outbound più sfortunato?"
-//   Per ogni camion outbound j, chiediamo: qual è il prima assoluto
-//   in cui la sua merce può essere pronta, nel caso migliore?
-//   La risposta è: prendi l'inbound i che finisce di scaricare prima
-//   e ha merce da mandare a j. Da quel momento, aggiungi il tempo
-//   di carico di j. Il makespan non può essere meno del massimo
-//   di questi valori su tutti i j.
-//
-// LB2 — "Le porte inbound sono un collo di bottiglia?"
-//   Somma tutti i tempi di scarico degli inbound. Dividi per il numero
-//   di porte inbound disponibili. Anche se le porte lavorassero sempre
-//   senza pause e tutti i camion arrivassero subito, non puoi finire
-//   prima di questo tempo.
-//
-// LB3 — "Le porte outbound sono un collo di bottiglia?"
-//   Stesso ragionamento di LB2, ma sul lato uscita: somma tutti i
-//   tempi di carico degli outbound e dividi per le porte outbound.
-//
-// LB4 — "Quanto tardi può andare il camion inbound più sfortunato?"
-//   Per ogni camion inbound i, anche se lo scheduli per primo e usa
-//   la porta subito libera, non può finire di scaricare e spedire la
-//   merce prima di: release_time[i] + unload_time[i] + il trasferimento
-//   minimo verso qualunque outbound. Il makespan non può essere meno
-//   del massimo di questi valori su tutti gli i.
+
+// LB1 (Critical Path Outbound) e LB4 (Critical Path Inbound)
+// A cosa servono: Calcolano il tempo vitale di un singolo camion, 
+// dal momento in cui arriva al momento in cui l'ultima cassa è stata caricata, ignorando tutti gli altri camion.
+// Quando servono: Negli scenari Uniform e Sparse. Se un camion arriva al minuto 120 e ci mette 30 minuti a scaricare, 
+// è impossibile finire prima di 150, anche se hai porte infinite. In questi scenari, LB1 e LB4 sono i "re" e dettano il limite.
 
 unsigned CD_Output::ComputeLowerBound() const
 {
@@ -229,18 +205,6 @@ unsigned CD_Output::ComputeLowerBound() const
             lb1 = max(lb1, best_j + in.LoadTime(j));
     }
 
-    // LB2 — Carico totale sulle porte inbound
-    unsigned total_unload = 0;
-    for (unsigned i = 0; i < in.InboundTrucks(); i++)
-        total_unload += in.UnloadTime(i);
-    unsigned lb2 = ceil((double)total_unload / in.InboundDoors());
-
-    // LB3 — Carico totale sulle porte outbound
-    unsigned total_load = 0;
-    for (unsigned j = 0; j < in.OutboundTrucks(); j++)
-        total_load += in.LoadTime(j);
-    unsigned lb3 = ceil((double)total_load / in.OutboundDoors());
-
     // LB4 — Critical Path per ogni inbound truck i
     unsigned lb4 = 0;
     for (unsigned i = 0; i < in.InboundTrucks(); i++)
@@ -259,24 +223,8 @@ unsigned CD_Output::ComputeLowerBound() const
         }
     }
     
-    // LB5 — Inbound-Fixed Lower Bound
-    // Sfrutta la simulazione inbound (già contenuta nel CD_Output)
-    vector<unsigned> goods_ready = ComputeGoodsReadyFromCurrentInbound();
-    
-    unsigned lb5_path = 0;
-    unsigned min_goods_ready = UINT_MAX;
-    
-    for (unsigned j = 0; j < in.OutboundTrucks(); j++) {
-        // Critical path
-        lb5_path = max(lb5_path, goods_ready[j] + in.LoadTime(j));
-        // Troviamo la prima merce in assoluto che arriva alle porte out
-        min_goods_ready = min(min_goods_ready, goods_ready[j]);
-    }
-    unsigned lb5_workload = min_goods_ready + ceil((double)total_load / in.OutboundDoors());
-    unsigned lb5 = max(lb5_path, lb5_workload);
-    
-    // Ritorna il massimo assoluto tra il LB teorico e il LB condizionale
-    return max({lb1, lb2, lb3, lb4, lb5});
+    return max({lb1, lb4});
+
 }
 
 

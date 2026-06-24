@@ -95,5 +95,3 @@ void GreedyCDSolver(const CD_Input& in, CD_Output& out)
 
   out.SetOutboundDoor(assigned_door_out);
 }
-
-
