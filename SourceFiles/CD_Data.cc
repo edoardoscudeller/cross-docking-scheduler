@@ -258,8 +258,25 @@ unsigned CD_Output::ComputeLowerBound() const
                 lb4 = path_i;
         }
     }
-    // Ritorna il massimo assoluto tra i LB teorici
-    return max({lb1, lb2, lb3, lb4});
+    
+    // LB5 — Inbound-Fixed Lower Bound
+    // Sfrutta la simulazione inbound (già contenuta nel CD_Output)
+    vector<unsigned> goods_ready = ComputeGoodsReadyFromCurrentInbound();
+    
+    unsigned lb5_path = 0;
+    unsigned min_goods_ready = UINT_MAX;
+    
+    for (unsigned j = 0; j < in.OutboundTrucks(); j++) {
+        // Critical path
+        lb5_path = max(lb5_path, goods_ready[j] + in.LoadTime(j));
+        // Troviamo la prima merce in assoluto che arriva alle porte out
+        min_goods_ready = min(min_goods_ready, goods_ready[j]);
+    }
+    unsigned lb5_workload = min_goods_ready + ceil((double)total_load / in.OutboundDoors());
+    unsigned lb5 = max(lb5_path, lb5_workload);
+    
+    // Ritorna il massimo assoluto tra il LB teorico e il LB condizionale
+    return max({lb1, lb2, lb3, lb4, lb5});
 }
 
 
