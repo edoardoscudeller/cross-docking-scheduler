@@ -1,6 +1,5 @@
 #include <iostream>
 #include <cstdlib>
-#include <chrono>
 #include <iomanip>
 #include <vector>
 #include <numeric>
