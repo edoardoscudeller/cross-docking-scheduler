@@ -50,9 +50,9 @@ DOOR_CONFIGS = {
     (20,  20):  (5,  5),
     (30,  30):  (6,  6),
     (50,  50):  (7,  7),
-    (100, 100): (10, 10),
-    (200, 200): (20, 20),
-    (500, 500): (30, 30),
+    (100, 100): (12, 12),
+    (200, 200): (25, 25),
+    (500, 500): (50, 50),
 }
 
 # Seed standardizzati: 5 repliche per istanza (robusti per analisi statistica)
@@ -200,9 +200,7 @@ def make_release_times(n: int, scenario: str, rng: random.Random) -> list[int]:
 # ---------------------------------------------------------------------------
 # Processing time (unload + load)
 # ---------------------------------------------------------------------------
-def make_processing_times(
-    n: int, m: int, scenario: str, rng: random.Random
-) -> tuple[list[int], list[int]]:
+def make_processing_times(n: int, m: int, scenario: str, rng: random.Random) -> tuple[list[int], list[int]]:
     """
     Genera unload_time (per truck inbound) e load_time (per truck outbound).
     1 u.t. = 1 minuto.
@@ -271,13 +269,7 @@ def make_processing_times(
 # ---------------------------------------------------------------------------
 # Transfer matrix
 # ---------------------------------------------------------------------------
-def make_transfer_matrix(
-    n: int,
-    m: int,
-    scenario: str,
-    target_density: float,
-    rng: random.Random,
-) -> list[list[int]]:
+def make_transfer_matrix(n: int, m: int, scenario: str, target_density: float, rng: random.Random) -> list[list[int]]:
     """
     Genera la matrice transfer n×m con valori in U[10, 50] (Nassief 2016).
     La densità effettiva viene portata a target_density ± 2% da enforce_density.
