@@ -143,8 +143,7 @@ vector<unsigned> CD_Output::ComputeGoodsReadyFromCurrentInbound() const
   for (unsigned j = 0; j < in.OutboundTrucks(); j++)
     for (unsigned i = 0; i < in.InboundTrucks(); i++)
       if (in.TransferTime(i, j) > 0)
-        goods_ready[j] = max(goods_ready[j],
-                             finish_unload[i] + in.TransferTime(i, j));
+        goods_ready[j] = max(goods_ready[j], finish_unload[i] + in.TransferTime(i, j));
   return goods_ready;
 }
 
@@ -258,22 +257,92 @@ unsigned CD_Output::ComputeLowerBound() const
                 lb4 = path_i;
         }
     }
-    // Lower Bound finale = max(LB1, LB2, LB3, LB4)
-    return max({lb1, lb2, lb3, lb4});
+        // LB5 — Inbound-Fixed Lower Bound
+    // Sfrutta la simulazione inbound (già contenuta nel CD_Output)
+    vector<unsigned> goods_ready = ComputeGoodsReadyFromCurrentInbound();
+    
+    unsigned lb5_path = 0;
+    unsigned min_goods_ready = UINT_MAX;
+    
+    for (unsigned j = 0; j < in.OutboundTrucks(); j++) {
+        // Critical path
+        lb5_path = max(lb5_path, goods_ready[j] + in.LoadTime(j));
+        // Troviamo la prima merce in assoluto che arriva alle porte out
+        min_goods_ready = min(min_goods_ready, goods_ready[j]);
+    }
+    unsigned lb5_workload = min_goods_ready + ceil((double)total_load / in.OutboundDoors());
+    unsigned lb5 = max(lb5_path, lb5_workload);
+    
+    // Ritorna il massimo assoluto tra il LB teorico e il LB condizionale
+    return max({lb1, lb2, lb3, lb4, lb5});
 }
 
+
+// ComputeAverageWaits — calcola il tempo medio di attesa nel piazzale
+// per i camion inbound (attesa prima di accedere a una porta di scarico)
+// e per i camion outbound (attesa prima di accedere a una porta di carico).
+//
+// Wait_in[truck]  = start_unload - release_time[truck]
+// Wait_out[truck] = start_load   - goods_ready[truck]
+//
+// Restituisce (avg_wait_in, avg_wait_out) in minuti.
+
+pair<double, double> CD_Output::ComputeAverageWaits() const
+{
+    // ── Inbound waits ────────────────────────────────────────────────
+    vector<unsigned> door_free_in(in.InboundDoors(), 0);
+    double total_wait_in = 0;
+
+    for (unsigned pos = 0; pos < in.InboundTrucks(); pos++)
+    {
+        unsigned truck = inbound_seq[pos];
+        unsigned start_unload = max(door_free_in[inbound_door[pos]], in.ReleaseTime(truck));
+        total_wait_in += (start_unload - in.ReleaseTime(truck));
+
+        unsigned finish = start_unload + in.UnloadTime(truck);
+        door_free_in[inbound_door[pos]] = finish;
+    }
+
+    // ── Outbound waits ───────────────────────────────────────────────
+    vector<unsigned> goods_ready = ComputeGoodsReadyFromCurrentInbound();
+    vector<unsigned> door_free_out(in.OutboundDoors(), 0);
+    double total_wait_out = 0;
+
+    for (unsigned pos = 0; pos < in.OutboundTrucks(); pos++)
+    {
+        unsigned start_load = max(door_free_out[outbound_door[pos]], goods_ready[outbound_seq[pos]]);
+        total_wait_out += (start_load - goods_ready[outbound_seq[pos]]);
+
+        unsigned finish = start_load + in.LoadTime(outbound_seq[pos]);
+        door_free_out[outbound_door[pos]] = finish;
+    }
+
+    return { total_wait_in  / in.InboundTrucks(), total_wait_out / in.OutboundTrucks() };
+}
 
 
 ostream& operator<<(ostream& os, const CD_Output& out)
 {
+  unsigned max_in = std::min((unsigned)20, out.in.InboundTrucks());
   os << "Inbound sequence : ";
-  for (unsigned i = 0; i < out.in.InboundTrucks(); i++)
-    os << out.inbound_seq[i] << "(" << out.inbound_door[i] << ") ";
+  for (unsigned i = 0; i < max_in; i++)
+    os << out.inbound_seq[i] << " ";
   os << endl;
 
+  os << "Inbound doors    : ";
+  for (unsigned i = 0; i < max_in; i++)
+    os << out.inbound_door[i] << " ";
+  os << endl;
+
+  unsigned max_out = std::min((unsigned)20, out.in.OutboundTrucks());
   os << "Outbound sequence: ";
-  for (unsigned j = 0; j < out.in.OutboundTrucks(); j++)
-    os << out.outbound_seq[j] << "(" << out.outbound_door[j] << ") ";
+  for (unsigned j = 0; j < max_out; j++)
+    os << out.outbound_seq[j] << " ";
+  os << endl;
+
+  os << "Outbound doors   : ";
+  for (unsigned j = 0; j < max_out; j++)
+    os << out.outbound_door[j] << " ";
   os << endl;
 
   return os;

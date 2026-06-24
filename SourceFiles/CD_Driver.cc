@@ -26,8 +26,9 @@ int main(int argc, char* argv[])
     });
 
     std::cout << "Initial Arrival  : ";
-    for (unsigned i : init_seq) {
-        std::cout << i << "(t=" << in.ReleaseTime(i) << ") ";
+    unsigned max_init = std::min((unsigned)20, in.InboundTrucks());
+    for (unsigned i = 0; i < max_init; i++) {
+        std::cout << init_seq[i] << " ";
     }
     std::cout << std::endl;
 
@@ -35,11 +36,17 @@ int main(int argc, char* argv[])
 
     std::cout << out; // Stampa Inbound e Outbound sequences
 
+    auto [avg_wait_in, avg_wait_out] = out.ComputeAverageWaits();
+
     unsigned lb = out.ComputeLowerBound();
     unsigned makespan = out.ComputeMakespan();
 
     std::cout << "Lower Bound : " << lb << std::endl;
     std::cout << "Makespan    : " << makespan << std::endl;
+
+    std::cout << std::fixed << std::setprecision(1);
+    std::cout << "Avg Wait In  : " << avg_wait_in << std::endl;
+    std::cout << "Avg Wait Out : " << avg_wait_out << std::endl;
 
     std::cout << std::fixed << std::setprecision(2);
     if (lb > 0)

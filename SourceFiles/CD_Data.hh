@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <cassert>
+#include <utility>
 
 using namespace std;
 
@@ -57,12 +58,12 @@ public:
   void SetInboundDoor(const vector<unsigned>& d)   { inbound_door  = d; }
   void SetOutboundDoor(const vector<unsigned>& d)  { outbound_door = d; }
 
-  // Helper per il greedy / valutazione
-  vector<unsigned> ComputeGoodsReadyFromCurrentInbound() const;
-
+  
   // Objective function
+  vector<unsigned> ComputeGoodsReadyFromCurrentInbound() const;
   unsigned ComputeMakespan() const;
   unsigned ComputeLowerBound() const;
+  pair<double, double> ComputeAverageWaits() const;
 
 private:
   const CD_Input& in;
