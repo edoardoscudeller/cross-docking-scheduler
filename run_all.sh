@@ -1,263 +1,254 @@
 #!/usr/bin/env bash
-# ===========================================================================
-# run_all.sh
-# Lancia CD_Test su tutte le istanze della v0.1, raggruppate per scenario.
-# Output: results_v0.1.txt (riscritto ad ogni esecuzione)
-# Uso: bash run_all.sh (dalla root cross-docking-scheduler/)
+# =============================================================================
+# run_all.sh — Esegue tutte le istanze .dzn e salva i risultati in un file TXT
+# =============================================================================
+# Uso (dalla root del progetto):
+#   bash run_all.sh                  # esegue tutto, salva in results_v0.1.txt
+#   bash run_all.sh uniform          # solo scenario uniform
+#   bash run_all.sh sparse 42        # solo sparse con seed 42
 #
-# Compatibile con Bash 3.2 (macOS): non usa mapfile.
-# ===========================================================================
+# Prerequisiti:
+#   - Binario compilato in ./SourceFiles/CD_Test (o CD_Test.exe su Windows)
+#   - Istanze .dzn generate in ./Instances/ tramite run_instances.sh
+#
+# Output:
+#   - results_v0.1.txt  (riscritto ad ogni esecuzione completa)
+#   - run_all.log       (log dettagliato di ogni esecuzione)
+#
+# Naming istanze atteso (allineato a generate.py v0.2):
+#   cd_n{N:04d}_m{M:04d}_{scenario}_d{density*100:02d}_s{seed}.dzn
+#   es.: cd_n0008_m0005_uniform_d75_s42.dzn
+#
+# Taglie: 10 classi × 7 scenari × 5 seed = 350 istanze totali
+# Unità temporale: 1 u.t. = 1 minuto
+# =============================================================================
 
-BINARY="./SourceFiles/CD_Test.exe"
-INSTANCES_DIR="./Instances"
-OUTPUT="results_v0.1.txt"
+set -euo pipefail
 
-# Istanze previste:
-# - 8x5 con seed 101, 111, 121
-# - 12x8 con seed 102, 112, 122
-# - 20x13 con seed 103, 113, 123
-# - 40x20 con seed 201
-# - 60x30 con seed 202
-# - 80x40 con seed 203
-# - 100x50 con seed 204
-# - 120x60 con seed 205
-# - 200x100 con seed 212
-# - 300x150 con seed 213
+# ---------------------------------------------------------------------------
+# Percorsi
+# ---------------------------------------------------------------------------
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INSTANCES_DIR="${SCRIPT_DIR}/Instances"
+OUTPUT="${SCRIPT_DIR}/results_v0.1.txt"
+LOG_FILE="${SCRIPT_DIR}/run_all.log"
 
-SIZES=(
-"8 5 101"
-"8 5 111"
-"8 5 121"
-"12 8 102"
-"12 8 112"
-"12 8 122"
-"20 13 103"
-"20 13 113"
-"20 13 123"
-"40 20 201"
-"60 30 202"
-"80 40 203"
-"100 50 204"
-"120 60 205"
-"200 100 212"
-"300 150 213"
-)
+# ---------------------------------------------------------------------------
+# Filtri CLI opzionali
+# ---------------------------------------------------------------------------
+FILTER_SCENARIO="${1:-}"
+FILTER_SEED="${2:-}"
 
-SCENARIOS=(uniform sparse clustered asymmetric congested urgent mixed)
+# ---------------------------------------------------------------------------
+# Ricerca binario (Linux/macOS/Windows-MinGW)
+# ---------------------------------------------------------------------------
+BINARY=""
+for candidate in \
+    "${SCRIPT_DIR}/SourceFiles/CD_Test" \
+    "${SCRIPT_DIR}/SourceFiles/CD_Test.exe" \
+    "${SCRIPT_DIR}/SourceFiles/cd_test" \
+    "${SCRIPT_DIR}/SourceFiles/cd_test.exe"; do
+    if [ -x "$candidate" ]; then
+        BINARY="$candidate"
+        break
+    fi
+done
 
-> "$OUTPUT"
-
-if [ -x "./SourceFiles/CD_Test.exe" ]; then
-    BINARY="./SourceFiles/CD_Test.exe"
-elif [ -x "./SourceFiles/CD_Test" ]; then
-    BINARY="./SourceFiles/CD_Test"
-else
-    echo "Errore: nessun binario trovato (né CD_Test.exe né CD_Test)."
+if [ -z "$BINARY" ]; then
+    echo "[ERRORE] Nessun binario trovato in SourceFiles/."
+    echo "         Compila prima con: cd SourceFiles && make"
     exit 1
 fi
 
+# ---------------------------------------------------------------------------
+# Verifica cartella istanze
+# ---------------------------------------------------------------------------
 if [ ! -d "$INSTANCES_DIR" ]; then
-  echo "Errore: cartella $INSTANCES_DIR non trovata."
-  exit 1
+    echo "[ERRORE] Cartella Instances/ non trovata in ${SCRIPT_DIR}."
+    echo "         Genera le istanze prima con: bash run_instances.sh"
+    exit 1
 fi
 
+# ---------------------------------------------------------------------------
+# Taglie istanze: (n, m, d_in, d_out, density_tag)
+# Allineate con run_instances.sh e generate.py v0.2
+# ---------------------------------------------------------------------------
+# Formato: "n m d_in d_out density_tag"
+# density_tag = valore di default per scenario (es. 75 = 75%)
+# ---------------------------------------------------------------------------
+SIZES=(
+    "8   5   4   4"
+    "12  8   4   4"
+    "20  13  5   5"
+    "40  20  6   6"
+    "60  30  6   6"
+    "80  40  7   7"
+    "100 50  10  10"
+    "120 60  10  10"
+    "200 100 20  20"
+    "300 150 20  20"
+)
+
+SCENARIOS=(uniform sparse clustered asymmetric congested urgent mixed)
+SEEDS=(42 101 202 314 999)
+
+# Densità di default per scenario (deve matchare generate.py)
+density_for_scenario() {
+    case "$1" in
+        uniform)    echo "75" ;;
+        sparse)     echo "25" ;;
+        clustered)  echo "35" ;;
+        asymmetric) echo "50" ;;
+        congested)  echo "75" ;;
+        urgent)     echo "35" ;;
+        mixed)      echo "50" ;;
+        *)          echo "50" ;;
+    esac
+}
+
+# ---------------------------------------------------------------------------
+# Contatori globali
+# ---------------------------------------------------------------------------
+TOT_OK=0
+TOT_SKIP=0
+TOT_FAIL=0
+START_TS=$(date +%s)
+
+# ---------------------------------------------------------------------------
+# Inizializzazione file output
+# ---------------------------------------------------------------------------
+{
+    echo "============================================================"
+    echo "  Cross-Docking Scheduler — Risultati v0.1"
+    [ -n "${FILTER_SCENARIO}" ] && echo "  Filtro scenario : ${FILTER_SCENARIO}"
+    [ -n "${FILTER_SEED}" ]     && echo "  Filtro seed     : ${FILTER_SEED}"
+    echo "  Unità temp.     : 1 u.t. = 1 minuto"
+    echo "============================================================"
+    echo ""
+} > "$OUTPUT"
+
+echo "$(date '+%H:%M:%S') Inizio esecuzione — binary: ${BINARY}" > "$LOG_FILE"
+
+# ---------------------------------------------------------------------------
+# Loop principale: scenario → taglia → seed
+# ---------------------------------------------------------------------------
 for SCENARIO in "${SCENARIOS[@]}"; do
-  echo ">>> Scenario: $SCENARIO"
 
-  declare -a arr_name arr_seed arr_n arr_m arr_din arr_dout
-  declare -a arr_lb arr_makespan arr_gap arr_cpu_s arr_cpu_min
-  declare -a arr_release arr_inbound arr_outbound
-
-  idx=0
-
-  for SIZE in "${SIZES[@]}"; do
-    N=$(echo "$SIZE" | awk '{print $1}')
-    M=$(echo "$SIZE" | awk '{print $2}')
-    SEED=$(echo "$SIZE" | awk '{print $3}')
-
-    INSTANCE="${INSTANCES_DIR}/cd_n$(printf "%04d" "$N")_m$(printf "%04d" "$M")_${SCENARIO}_s${SEED}.dzn"
-
-    if [ ! -f "$INSTANCE" ]; then
-      echo " [SKIP] non trovata: $INSTANCE"
-      continue
+    # Applica filtro scenario
+    if [ -n "${FILTER_SCENARIO}" ] && [ "${SCENARIO}" != "${FILTER_SCENARIO}" ]; then
+        continue
     fi
 
-    BASENAME=$(basename "$INSTANCE" .dzn)
-    echo " Esecuzione: $BASENAME"
+    DENSITY_TAG="$(density_for_scenario "${SCENARIO}")"
 
-    RAW=$("$BINARY" "$INSTANCE" 2>/dev/null)
-    STATUS=$?
+    echo "============================================================" | tee -a "$OUTPUT"
+    echo "SCENARIO: ${SCENARIO}  (densità default: ${DENSITY_TAG}%)"   | tee -a "$OUTPUT"
+    echo "============================================================" | tee -a "$OUTPUT"
+    printf "%-45s %8s %8s %8s %10s %10s\n" \
+        "Istanza" "LB" "Makespan" "Gap(%)" "CPU(s)" "CPU(min)" | tee -a "$OUTPUT"
+    printf "%s\n" "------------------------------------------------------------\
+-----------------------------------------" | tee -a "$OUTPUT"
 
-    LB=""
-    MAKESPAN=""
-    GAP=""
-    CPU_S=""
-    CPU_MIN=""
-    DIN=""
-    DOUT=""
-    RELEASE=""
-    INBOUND=""
-    OUTBOUND=""
+    for SIZE_ENTRY in "${SIZES[@]}"; do
+        N=$(echo "$SIZE_ENTRY"  | awk '{print $1}')
+        M=$(echo "$SIZE_ENTRY"  | awk '{print $2}')
+        DIN=$(echo "$SIZE_ENTRY"  | awk '{print $3}')
+        DOUT=$(echo "$SIZE_ENTRY" | awk '{print $4}')
 
-    if [ $STATUS -eq 0 ] && [ -n "$RAW" ]; then
-      LB=$(echo "$RAW" | awk -F': ' '/^Lower Bound[[:space:]]*: / {print $2}' | head -n 1)
-      MAKESPAN=$(echo "$RAW" | awk -F': ' '/^Makespan[[:space:]]*: / {print $2}' | head -n 1)
-      GAP=$(echo "$RAW" | sed -n 's/^Gap (%)[[:space:]]*:[[:space:]]*\([0-9.][0-9.]*\)%$/\1/p' | head -n 1)
-      CPU_S=$(echo "$RAW" | awk -F': ' '/^CPU time[[:space:]]*: / {print $2}' | sed 's/ s$//' | head -n 1)
+        for SEED in "${SEEDS[@]}"; do
 
-      DIN=$(echo "$RAW" | sed -n 's/^Doors[[:space:]]*:[[:space:]]*in=\([0-9][0-9]*\)[[:space:]]*out=\([0-9][0-9]*\)$/\1/p' | head -n 1)
-      DOUT=$(echo "$RAW" | sed -n 's/^Doors[[:space:]]*:[[:space:]]*in=\([0-9][0-9]*\)[[:space:]]*out=\([0-9][0-9]*\)$/\2/p' | head -n 1)
+            # Applica filtro seed
+            if [ -n "${FILTER_SEED}" ] && [ "${SEED}" != "${FILTER_SEED}" ]; then
+                continue
+            fi
 
-      if [ -n "$CPU_S" ]; then
-        CPU_MIN=$(awk -v t="$CPU_S" 'BEGIN { printf "%.6f", t/60.0 }')
-      fi
+            # Costruzione nome file (naming generate.py v0.2)
+            N_PAD=$(printf "%04d" "$N")
+            M_PAD=$(printf "%04d" "$M")
+            INSTANCE="${INSTANCES_DIR}/cd_n${N_PAD}_m${M_PAD}_${SCENARIO}_d${DENSITY_TAG}_s${SEED}.dzn"
+            BASENAME="cd_n${N_PAD}_m${M_PAD}_${SCENARIO}_d${DENSITY_TAG}_s${SEED}"
 
-      if [ "$N" -le 20 ]; then
-        RELEASE=$(echo "$RAW" | awk '/^ReleaseTime/ {sub(/^[^=]*=[[:space:]]*/, "", $0); print; exit}')
-        INBOUND=$(echo "$RAW" | awk 'tolower($0) ~ /^inbound[[:space:]]+sequence:/ {sub(/^[^:]*:[[:space:]]*/, "", $0); print; exit}')
-        OUTBOUND=$(echo "$RAW" | awk 'tolower($0) ~ /^outbound[[:space:]]+sequence:/ {sub(/^[^:]*:[[:space:]]*/, "", $0); print; exit}')
-        [ -z "$RELEASE" ] && RELEASE="(n<=20: not found)"
-        [ -z "$INBOUND" ] && INBOUND="(n<=20: not found)"
-        [ -z "$OUTBOUND" ] && OUTBOUND="(n<=20: not found)"
-      else
-        RELEASE="(n>20: not printed)"
-        INBOUND="(n>20: not printed)"
-        OUTBOUND="(n>20: not printed)"
-      fi
-    else
-      LB="(execution failed)"
-      MAKESPAN="(execution failed)"
-      GAP="(execution failed)"
-      CPU_S="(execution failed)"
-      CPU_MIN="(execution failed)"
-      DIN="(execution failed)"
-      DOUT="(execution failed)"
+            # File non trovato → skip
+            if [ ! -f "$INSTANCE" ]; then
+                printf "  [SKIP] %-43s non trovata\n" "${BASENAME}" | tee -a "$OUTPUT"
+                echo "$(date '+%H:%M:%S') SKIP  ${BASENAME}" >> "$LOG_FILE"
+                TOT_SKIP=$((TOT_SKIP + 1))
+                continue
+            fi
 
-      if [ "$N" -le 20 ]; then
-        RELEASE="(execution failed)"
-        INBOUND="(execution failed)"
-        OUTBOUND="(execution failed)"
-      else
-        RELEASE="(n>20: not printed)"
-        INBOUND="(n>20: not printed)"
-        OUTBOUND="(n>20: not printed)"
-      fi
-    fi
+            # Esecuzione binario
+            echo "$(date '+%H:%M:%S') RUN   ${BASENAME}" >> "$LOG_FILE"
+            RAW=$("$BINARY" "$INSTANCE" 2>/dev/null) || STATUS=$?
+            STATUS=${STATUS:-0}
 
-    arr_name[$idx]="$BASENAME"
-    arr_seed[$idx]="$SEED"
-    arr_n[$idx]="$N"
-    arr_m[$idx]="$M"
-    arr_din[$idx]="$DIN"
-    arr_dout[$idx]="$DOUT"
-    arr_lb[$idx]="$LB"
-    arr_makespan[$idx]="$MAKESPAN"
-    arr_gap[$idx]="$GAP"
-    arr_cpu_s[$idx]="$CPU_S"
-    arr_cpu_min[$idx]="$CPU_MIN"
-    arr_release[$idx]="$RELEASE"
-    arr_inbound[$idx]="$INBOUND"
-    arr_outbound[$idx]="$OUTBOUND"
+            if [ "$STATUS" -ne 0 ] || [ -z "$RAW" ]; then
+                printf "  [ERR]  %-43s esecuzione fallita (exit=%d)\n" "${BASENAME}" "${STATUS}" | tee -a "$OUTPUT"
+                echo "$(date '+%H:%M:%S') ERR   ${BASENAME} exit=${STATUS}" >> "$LOG_FILE"
+                TOT_FAIL=$((TOT_FAIL + 1))
+                continue
+            fi
 
-    idx=$((idx + 1))
-  done
+            # --- Parsing output binario ---
+            LB=$(echo "$RAW"       | awk '/Lower Bound/{print $NF}')
+            MAKESPAN=$(echo "$RAW" | awk '/Makespan/{print $NF}')
+            GAP=$(echo "$RAW"      | awk '/Gap \(%\)/{gsub(/%/,"",$NF); print $NF}')
+            CPU_S=$(echo "$RAW"    | awk '/CPU time/{print $(NF-1)}')
 
-  COUNT=$idx
+            # Valori mancanti → placeholder
+            LB="${LB:----}"
+            MAKESPAN="${MAKESPAN:----}"
+            GAP="${GAP:----}"
+            CPU_S="${CPU_S:----}"
 
-  {
-    echo "========================================"
-    echo "SCENARIO: $SCENARIO"
-    echo "========================================"
-    echo ""
+            # CPU in minuti
+            if [[ "$CPU_S" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+                CPU_MIN=$(awk -v t="$CPU_S" 'BEGIN{printf "%.4f", t/60.0}')
+            else
+                CPU_MIN="---"
+            fi
 
-    echo "Instance name"
-    for ((i=0; i<COUNT; i++)); do
-      echo "${arr_name[$i]}"
-    done
-    echo ""
+            # Stampa riga risultato
+            printf "  %-45s %8s %8s %8s %10s %10s\n" \
+                "${BASENAME}" "${LB}" "${MAKESPAN}" "${GAP}" "${CPU_S}" "${CPU_MIN}" \
+                | tee -a "$OUTPUT"
 
-    echo "Seed"
-    for ((i=0; i<COUNT; i++)); do
-      echo "${arr_seed[$i]}"
-    done
-    echo ""
+            # Dettaglio sequenze per istanze piccole (n≤20)
+            if [ "$N" -le 20 ]; then
+                INBOUND=$(echo "$RAW"  | grep -i "Inbound.*Sequence"  | head -1)
+                OUTBOUND=$(echo "$RAW" | grep -i "Outbound.*Sequence" | head -1)
+                [ -n "$INBOUND"  ] && printf "    Inbound  seq: %s\n"  "${INBOUND}"  | tee -a "$OUTPUT"
+                [ -n "$OUTBOUND" ] && printf "    Outbound seq: %s\n"  "${OUTBOUND}" | tee -a "$OUTPUT"
+            fi
 
-    echo "N inbound"
-    for ((i=0; i<COUNT; i++)); do
-      echo "${arr_n[$i]}"
-    done
-    echo ""
+            echo "$(date '+%H:%M:%S') OK    ${BASENAME} LB=${LB} MS=${MAKESPAN} GAP=${GAP}% CPU=${CPU_S}s" >> "$LOG_FILE"
+            TOT_OK=$((TOT_OK + 1))
 
-    echo "M outbound"
-    for ((i=0; i<COUNT; i++)); do
-      echo "${arr_m[$i]}"
-    done
-    echo ""
+        done  # seed
+    done  # taglia
 
-    echo "Inbound doors"
-    for ((i=0; i<COUNT; i++)); do
-      echo "${arr_din[$i]}"
-    done
-    echo ""
+    echo "" | tee -a "$OUTPUT"
 
-    echo "Outbound doors"
-    for ((i=0; i<COUNT; i++)); do
-      echo "${arr_dout[$i]}"
-    done
-    echo ""
+done  # scenario
 
-    echo "Lower Bound"
-    for ((i=0; i<COUNT; i++)); do
-      echo "${arr_lb[$i]}"
-    done
-    echo ""
+# ---------------------------------------------------------------------------
+# Riepilogo finale
+# ---------------------------------------------------------------------------
+END_TS=$(date +%s)
+ELAPSED=$((END_TS - START_TS))
 
-    echo "Makespan"
-    for ((i=0; i<COUNT; i++)); do
-      echo "${arr_makespan[$i]}"
-    done
-    echo ""
+{
+    echo "============================================================"
+    echo " RIEPILOGO FINALE"
+    echo "   Istanze eseguite OK : ${TOT_OK}"
+    echo "   Saltate (not found) : ${TOT_SKIP}"
+    echo "   Fallite (exit≠0)    : ${TOT_FAIL}"
+    printf "   Tempo totale        : %dm %ds\n" $((ELAPSED/60)) $((ELAPSED%60))
+    echo "============================================================"
+} | tee -a "$OUTPUT"
 
-    echo "Gap (%)"
-    for ((i=0; i<COUNT; i++)); do
-      echo "${arr_gap[$i]}"
-    done
-    echo ""
+echo "$(date '+%H:%M:%S') Fine — OK=${TOT_OK} SKIP=${TOT_SKIP} ERR=${TOT_FAIL} elapsed=${ELAPSED}s" >> "$LOG_FILE"
+echo ""
+echo "Risultati salvati in: ${OUTPUT}"
 
-    echo "CPU Time (s)"
-    for ((i=0; i<COUNT; i++)); do
-      echo "${arr_cpu_s[$i]}"
-    done
-    echo ""
-
-    echo "CPU Time (min)"
-    for ((i=0; i<COUNT; i++)); do
-      echo "${arr_cpu_min[$i]}"
-    done
-    echo ""
-
-    echo "Release time"
-    for ((i=0; i<COUNT; i++)); do
-      echo "${arr_release[$i]}"
-    done
-    echo ""
-
-    echo "Inbound sequence"
-    for ((i=0; i<COUNT; i++)); do
-      echo "${arr_inbound[$i]}"
-    done
-    echo ""
-
-    echo "Outbound sequence"
-    for ((i=0; i<COUNT; i++)); do
-      echo "${arr_outbound[$i]}"
-    done
-    echo ""
-  } >> "$OUTPUT"
-
-  unset arr_name arr_seed arr_n arr_m arr_din arr_dout
-  unset arr_lb arr_makespan arr_gap arr_cpu_s arr_cpu_min
-  unset arr_release arr_inbound arr_outbound
-done
-
-echo "Fatto. Risultati salvati in: $OUTPUT"
+# Exit code non-zero se ci sono errori
+[ "${TOT_FAIL}" -eq 0 ] || exit 1
