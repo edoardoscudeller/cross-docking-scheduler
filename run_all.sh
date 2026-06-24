@@ -29,8 +29,8 @@ fi
     echo "============================================================"
     echo "  Cross-Docking Scheduler — Risultati Test"
     echo "============================================================"
-    printf "%-45s %8s %8s %8s\n" "Istanza" "LB" "Makespan" "Gap(%)"
-    echo "-----------------------------------------------------------------------"
+    printf "%-45s %8s %8s %8s %8s %8s\n" "Istanza" "LB" "Makespan" "Gap(%)" "WaitIn" "WaitOut"
+    echo "--------------------------------------------------------------------------------------------"
 } > "$OUTPUT"
 
 > "$LOG_FILE"
@@ -57,19 +57,25 @@ for INSTANCE in $(ls "$INSTANCES_DIR"/*.dzn | sort); do
     LB=$(echo "$RAW"       | awk '/Lower Bound/{print $NF}')
     MAKESPAN=$(echo "$RAW" | awk '/Makespan/{print $NF}')
     GAP=$(echo "$RAW"      | awk '/Gap \(%\)/{gsub(/%/,"",$NF); print $NF}')
+    WAIT_IN=$(echo "$RAW"  | awk '/Avg Wait In/{print $NF}')
+    WAIT_OUT=$(echo "$RAW" | awk '/Avg Wait Out/{print $NF}')
 
-    INIT_ARR=$(echo "$RAW" | grep -i "Initial Arrival" || true)
-    IN_SEQ=$(echo "$RAW" | grep -i "Inbound sequence" || true)
-    OUT_SEQ=$(echo "$RAW" | grep -i "Outbound sequence" || true)
+    INIT_ARR=$(echo "$RAW" | grep -i "^Initial Arrival" || true)
+    IN_SEQ=$(echo "$RAW" | grep -i "^Inbound sequence" || true)
+    IN_DOOR=$(echo "$RAW" | grep -i "^Inbound doors" || true)
+    OUT_SEQ=$(echo "$RAW" | grep -i "^Outbound sequence" || true)
+    OUT_DOOR=$(echo "$RAW" | grep -i "^Outbound doors" || true)
 
     # Stampa i risultati formattati
-    printf "  %-45s %8s %8s %8s\n" "${BASENAME}" "${LB:-???}" "${MAKESPAN:-???}" "${GAP:-???}" | tee -a "$OUTPUT"
+    printf "  %-45s %8s %8s %8s %8s %8s\n" "${BASENAME}" "${LB:-???}" "${MAKESPAN:-???}" "${GAP:-???}" "${WAIT_IN:-???}" "${WAIT_OUT:-???}" | tee -a "$OUTPUT"
     
     # Mostra le sequenze
     echo "      ${INIT_ARR}" | tee -a "$OUTPUT"
     echo "      ${IN_SEQ}" | tee -a "$OUTPUT"
+    echo "      ${IN_DOOR}" | tee -a "$OUTPUT"
     echo "      ${OUT_SEQ}" | tee -a "$OUTPUT"
-    echo "-----------------------------------------------------------------------" | tee -a "$OUTPUT"
+    echo "      ${OUT_DOOR}" | tee -a "$OUTPUT"
+    echo "--------------------------------------------------------------------------------------------" | tee -a "$OUTPUT"
     
     TOT_OK=$((TOT_OK + 1))
 done
